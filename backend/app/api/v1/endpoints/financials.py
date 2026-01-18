@@ -6,6 +6,7 @@ from app.schemas.financial import FinancialCreate, FinancialResponse
 from app.api.v1.deps import get_current_user
 from app.services.runway_engine import calculate_burn_rate, calculate_runway_months
 from app.services.csv_service import process_csv_upload
+from app.services.ml_forecast import forecaster
 
 router = APIRouter()
 
@@ -71,6 +72,36 @@ async def import_financial_csv(
     """
     result = await process_csv_upload(file, current_user)
     return result
+
+@router.get("/forecast", response_model=List[dict])
+async def get_revenue_forecast(
+    months: int = 6,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Predict future revenue using Linear Regression ML.
+    """
+    # 1. Fetch History
+    records = await FinancialRecord.find(
+        FinancialRecord.user.id == current_user.id
+    ).sort(FinancialRecord.month).to_list()
+
+    if not records:
+        return []
+
+    # 2. Transform for ML
+    history = [
+        {
+            "month": r.month,
+            "revenue": r.revenue_recurring + r.revenue_one_time
+        }
+        for r in records
+    ]
+
+    # 3. Run Prediction
+    forecast = forecaster.predict_next_months(history, months_ahead=months)
+    return forecast
+
 
 @router.get("/export", response_model=List[FinancialResponse])
 async def export_financial_data(current_user: User = Depends(get_current_user)):

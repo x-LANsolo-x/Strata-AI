@@ -13,3 +13,7 @@ python-jose[cryptography]==3.3.0
 python-multipart==0.0.9
 email-validator==2.1.0.post1
 groq>=1.0.0
+pandas==2.2.0
+scikit-learn==1.4.0
+numpy==1.26.3
+python-dateutil>=2.8.2
