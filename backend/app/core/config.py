@@ -11,9 +11,13 @@ class Settings(BaseSettings):
     MONGODB_URI: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 1 day
 
+    # LLM Configuration
+    GROQ_API_KEY: str = ""
+    LLM_MODEL: str = "llama-3.3-70b-versatile"
+
     class Config:
         env_file = ".env"
         case_sensitive = True
-        extra = "ignore" # Allow extra fields in .env
+        extra = "ignore"
 
 settings = Settings()
