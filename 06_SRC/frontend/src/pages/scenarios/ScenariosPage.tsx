@@ -1,28 +1,43 @@
 import { useScenarios } from '@/hooks/useScenarios';
 import { ScenarioCard } from '@/components/shared/ScenarioCard';
-import { Button } from '@/components/ui/Button';
-import { Loader2, Plus } from 'lucide-react';
-import { useUiStore } from '@/stores/ui.store'; // 1. Import the store hook
+import { Loader2, FolderOpen } from 'lucide-react';
+import { useUiStore } from '@/stores/ui.store';
 
 export function ScenariosPage() {
   const { data: scenarios, isLoading, isError } = useScenarios();
-  const { openModal } = useUiStore(); // 2. Get the openModal function
+  const { openModal } = useUiStore();
 
   const renderContent = () => {
     if (isLoading) {
       return (
         <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
         </div>
       );
     }
 
     if (isError) {
-      return <div className="text-red-500">Error fetching scenarios.</div>;
+      return (
+        <div className="bg-danger/10 border border-danger text-danger px-4 py-3 rounded-xl">
+          Error fetching scenarios. Please try again.
+        </div>
+      );
     }
 
     if (scenarios?.length === 0) {
-      return <p>No scenarios created yet. Get started by creating one!</p>;
+      return (
+        <div className="flex flex-col items-center justify-center h-64 bg-white rounded-2xl border border-gray-100 shadow-card">
+          <FolderOpen className="h-12 w-12 text-gray-300 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">No scenarios yet</h3>
+          <p className="text-sm text-gray-500 mb-4">Get started by creating your first what-if scenario</p>
+          <button 
+            onClick={() => openModal('createScenario')}
+            className="text-primary-500 font-medium hover:text-primary-600 hover:underline transition-all"
+          >
+            Create your first scenario →
+          </button>
+        </div>
+      );
     }
 
     return (
@@ -36,14 +51,6 @@ export function ScenariosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">What-If Scenarios</h1>
-        {/* 3. Add onClick handler */}
-        <Button onClick={() => openModal('createScenario')}>
-          <Plus className="h-4 w-4 mr-2" />
-          Create Scenario
-        </Button>
-      </div>
       {renderContent()}
     </div>
   );

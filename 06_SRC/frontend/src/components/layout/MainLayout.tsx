@@ -9,7 +9,7 @@ export function MainLayout() {
   return (
     <div className="flex min-h-screen w-full flex-col bg-gray-50">
       <Sidebar />
-      <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-64">
+      <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-64 bg-cream-100 min-h-screen">
         <Header />
         <motion.main
           key={location.pathname} // This key is crucial to re-trigger the animation on route change

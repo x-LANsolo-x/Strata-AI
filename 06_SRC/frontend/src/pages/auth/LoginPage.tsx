@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/auth.store';
 import { login } from '@/services/auth.service';
 import { useNavigate, Link } from 'react-router-dom';
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mail, Lock } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -42,24 +42,64 @@ export function LoginPage() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <h2 className="text-xl font-semibold text-center mb-4">Welcome Back</h2>
-      <div>
-        <label htmlFor="email">Email</label>
-        <input {...register('email')} id="email" type="email" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-        {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Welcome Back</h2>
+        <p className="text-sm text-gray-500 mt-1">Sign in to continue to your dashboard</p>
       </div>
+
+      {/* Email Field */}
       <div>
-        <label htmlFor="password">Password</label>
-        <input {...register('password')} id="password" type="password" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
+        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+          Email Address
+        </label>
+        <div className="relative">
+          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <input 
+            {...register('email')} 
+            id="email" 
+            type="email" 
+            placeholder="you@example.com"
+            className="block w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none transition-colors" 
+          />
+        </div>
+        {errors.email && <p className="text-danger text-sm mt-1">{errors.email.message}</p>}
       </div>
-      <Button type="submit" disabled={isSubmitting} className="w-full">
+
+      {/* Password Field */}
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            Password
+          </label>
+          <a href="#" className="text-sm text-primary-500 hover:text-primary-600 font-medium">
+            Forgot password?
+          </a>
+        </div>
+        <div className="relative">
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <input 
+            {...register('password')} 
+            id="password" 
+            type="password" 
+            placeholder="••••••••"
+            className="block w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none transition-colors" 
+          />
+        </div>
+      </div>
+
+      {/* Submit Button */}
+      <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
         {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-        Log In
+        Sign In
       </Button>
-      <p className="text-center text-sm text-gray-600">
+
+      {/* Sign Up Link */}
+      <p className="text-center text-sm text-gray-500">
         Don't have an account?{' '}
-        <Link to="/register" className="font-semibold text-black hover:underline">Sign Up</Link>
+        <Link to="/register" className="font-semibold text-primary-500 hover:text-primary-600">
+          Create account
+        </Link>
       </p>
     </form>
   );

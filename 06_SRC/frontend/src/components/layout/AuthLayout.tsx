@@ -3,15 +3,26 @@ import { Rocket } from 'lucide-react';
 
 export function AuthLayout() {
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-gray-100 p-4">
+    <div className="flex min-h-screen w-full items-center justify-center bg-cream-100 p-4">
       <div className="w-full max-w-md">
-        <div className="text-center mb-6">
-          <Rocket className="mx-auto h-10 w-10 text-black" />
-          <h1 className="text-3xl font-bold mt-2">Strata-AI</h1>
+        {/* Logo Section */}
+        <div className="text-center mb-8">
+          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-500 text-white mb-4">
+            <Rocket className="h-7 w-7" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900">Strata-AI</h1>
+          <p className="text-gray-500 mt-1">AI-powered startup survival assistant</p>
         </div>
-        <div className="bg-white p-8 rounded-xl shadow-md">
+        
+        {/* Form Card */}
+        <div className="bg-white p-8 rounded-2xl shadow-card border border-gray-100">
           <Outlet />
         </div>
+
+        {/* Footer */}
+        <p className="text-center text-xs text-gray-400 mt-6">
+          © 2026 Strata-AI. All rights reserved.
+        </p>
       </div>
     </div>
   );

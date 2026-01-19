@@ -1,28 +1,50 @@
 import type { Scenario } from '@/types/scenario.types';
-import { ArrowUpRight, ArrowDownRight, Tag } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, BarChart3, DollarSign, Users, TrendingDown } from 'lucide-react';
 
 interface ScenarioCardProps {
   scenario: Scenario;
 }
 
+// Icon mapping based on scenario type
+const typeIcons: Record<string, React.ElementType> = {
+  hiring: Users,
+  pricing: DollarSign,
+  'cost-cutting': TrendingDown,
+  default: BarChart3,
+};
+
 export function ScenarioCard({ scenario }: ScenarioCardProps) {
   const { name, type, result } = scenario;
   const isPositive = result.runwayDelta >= 0;
   const DeltaIcon = isPositive ? ArrowUpRight : ArrowDownRight;
-  const deltaColor = isPositive ? 'text-green-600' : 'text-red-600';
+  const TypeIcon = typeIcons[type] || typeIcons.default;
 
   return (
-    <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
-      <div className="flex justify-between items-start">
-        <h3 className="font-bold text-lg text-gray-800">{name}</h3>
-        <span className={`flex items-center text-lg font-bold ${deltaColor}`}>
-          <DeltaIcon className="h-5 w-5 mr-1" />
-          {result.runwayDelta.toFixed(1)} mo
-        </span>
+    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-card hover:shadow-card-hover hover:border-primary-200 transition-all cursor-pointer group">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 group-hover:bg-primary-100 transition-colors">
+            <TypeIcon className="h-5 w-5 text-primary-500" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-gray-900">{name}</h3>
+            <span className="text-xs text-gray-500 capitalize">{type} scenario</span>
+          </div>
+        </div>
       </div>
-      <div className="flex items-center gap-2 mt-3 text-gray-500">
-        <Tag className="h-4 w-4" />
-        <span className="text-sm font-medium capitalize">{type}</span>
+
+      {/* Impact */}
+      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+        <span className="text-sm text-gray-500">Runway Impact</span>
+        <div className={`flex items-center gap-1 px-2.5 py-1 rounded-lg ${
+          isPositive ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
+        }`}>
+          <DeltaIcon className="h-4 w-4" />
+          <span className="text-sm font-semibold">
+            {isPositive ? '+' : ''}{result.runwayDelta.toFixed(1)} months
+          </span>
+        </div>
       </div>
     </div>
   );

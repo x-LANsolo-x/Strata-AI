@@ -5,9 +5,8 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
 import { useUpdateStartupProfile } from '@/hooks/useStartup';
 import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Rocket, Building2, Briefcase, DollarSign, TrendingDown, CheckCircle, ChevronRight } from 'lucide-react';
 
-// Combine all onboarding steps into a single schema
 const onboardingSchema = z.object({
   name: z.string().min(2, "Startup name is required"),
   industry: z.string().min(2, "Industry is required"),
@@ -18,9 +17,9 @@ const onboardingSchema = z.object({
 type OnboardingFormData = z.infer<typeof onboardingSchema>;
 
 const steps = [
-  { id: 1, name: 'Startup Basics' },
-  { id: 2, name: 'Financial Snapshot' },
-  { id: 3, name: 'Finish' },
+  { id: 1, name: 'Basics', icon: Building2 },
+  { id: 2, name: 'Financials', icon: DollarSign },
+  { id: 3, name: 'Finish', icon: CheckCircle },
 ];
 
 export function OnboardingWizard() {
@@ -46,7 +45,6 @@ export function OnboardingWizard() {
     } else if (currentStep === 2) {
       isValid = await trigger(['initialCash', 'monthlyBurn']);
     }
-
     if (isValid) {
       setCurrentStep(prev => prev + 1);
     }
@@ -57,99 +55,171 @@ export function OnboardingWizard() {
   };
 
   const onSubmit = (data: OnboardingFormData) => {
-    console.log("Onboarding data submitted:", data);
     updateStartup(
       { name: data.name, industry: data.industry, stage: data.stage },
       { onSuccess: () => navigate('/') }
     );
   };
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-xl bg-white p-8 rounded-xl shadow-lg">
-        <h1 className="text-2xl font-bold mb-2">Welcome to Strata-AI</h1>
-        <p className="text-gray-600 mb-6">Let's set up your startup profile.</p>
+  const inputClasses = "block w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none transition-colors";
+  const labelClasses = "block text-sm font-medium text-gray-700 mb-1";
 
-        {/* Step Indicator */}
-        <div className="flex justify-between mb-8">
-          {steps.map((step) => (
-            <div key={step.id} className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
-                currentStep >= step.id ? 'bg-black text-white' : 'bg-gray-200 text-gray-500'
-              }`}>
-                {step.id}
-              </div>
-              <span className={`ml-2 text-sm ${currentStep >= step.id ? 'text-black' : 'text-gray-400'}`}>
-                {step.name}
-              </span>
-            </div>
-          ))}
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-cream-100 p-4">
+      <div className="w-full max-w-xl">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-500 text-white mb-4">
+            <Rocket className="h-7 w-7" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Welcome to Strata-AI</h1>
+          <p className="text-gray-500 mt-1">Let's set up your startup profile in 3 easy steps</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          {currentStep === 1 && (
-            <div className="space-y-4">
-              <h3 className="font-semibold">Step 1: Startup Basics</h3>
-              <div>
-                <label htmlFor="name">Startup Name</label>
-                <input {...register('name')} id="name" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
+        <div className="bg-white p-8 rounded-2xl shadow-card border border-gray-100">
+          {/* Step Indicator */}
+          <div className="flex items-center justify-between mb-8">
+            {steps.map((step, index) => (
+              <div key={step.id} className="flex items-center">
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl text-sm font-semibold transition-colors ${
+                  currentStep >= step.id 
+                    ? 'bg-primary-500 text-white' 
+                    : 'bg-gray-100 text-gray-400'
+                }`}>
+                  {currentStep > step.id ? (
+                    <CheckCircle className="h-5 w-5" />
+                  ) : (
+                    <step.icon className="h-5 w-5" />
+                  )}
+                </div>
+                <span className={`ml-2 text-sm font-medium hidden sm:block ${
+                  currentStep >= step.id ? 'text-gray-900' : 'text-gray-400'
+                }`}>
+                  {step.name}
+                </span>
+                {index < steps.length - 1 && (
+                  <ChevronRight className="h-5 w-5 text-gray-300 mx-2 sm:mx-4" />
+                )}
               </div>
-              <div>
-                <label htmlFor="industry">Industry</label>
-                <input {...register('industry')} id="industry" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-                {errors.industry && <p className="text-red-500 text-sm mt-1">{errors.industry.message}</p>}
-              </div>
-              <div>
-                <label htmlFor="stage">Stage</label>
-                <select {...register('stage')} id="stage" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
-                  <option value="idea">Idea</option>
-                  <option value="mvp">MVP</option>
-                  <option value="growth">Growth</option>
-                  <option value="scale">Scale</option>
-                </select>
-                {errors.stage && <p className="text-red-500 text-sm mt-1">{errors.stage.message}</p>}
-              </div>
-            </div>
-          )}
-
-          {currentStep === 2 && (
-             <div className="space-y-4">
-              <h3 className="font-semibold">Step 2: Financial Snapshot</h3>
-               <div>
-                 <label htmlFor="initialCash">Initial Cash Balance ($)</label>
-                 <input {...register('initialCash', { valueAsNumber: true })} id="initialCash" type="number" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-                 {errors.initialCash && <p className="text-red-500 text-sm mt-1">{errors.initialCash.message}</p>}
-               </div>
-               <div>
-                 <label htmlFor="monthlyBurn">Average Monthly Burn ($)</label>
-                 <input {...register('monthlyBurn', { valueAsNumber: true })} id="monthlyBurn" type="number" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" />
-                 {errors.monthlyBurn && <p className="text-red-500 text-sm mt-1">{errors.monthlyBurn.message}</p>}
-               </div>
-             </div>
-          )}
-
-          {currentStep === 3 && (
-            <div className="text-center">
-              <h3 className="font-semibold text-lg">All set!</h3>
-              <p className="text-gray-600 mt-2">Click finish to jump into your dashboard.</p>
-            </div>
-          )}
-
-          <div className="mt-8 flex justify-between">
-            <Button type="button" variant="secondary" onClick={handleBack} disabled={currentStep === 1}>
-              Back
-            </Button>
-            {currentStep < 3 ? (
-              <Button type="button" onClick={handleNext}>Next</Button>
-            ) : (
-              <Button type="submit" disabled={isPending}>
-                {isPending && <Loader2 className="h-4 w-4 animate-spin mr-2"/>}
-                Finish
-              </Button>
-            )}
+            ))}
           </div>
-        </form>
+
+          <form onSubmit={handleSubmit(onSubmit)}>
+            {currentStep === 1 && (
+              <div className="space-y-5">
+                <div>
+                  <label htmlFor="name" className={labelClasses}>Startup Name</label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input 
+                      {...register('name')} 
+                      id="name" 
+                      placeholder="Acme Inc."
+                      className={`${inputClasses} pl-10`}
+                    />
+                  </div>
+                  {errors.name && <p className="text-danger text-sm mt-1">{errors.name.message}</p>}
+                </div>
+                <div>
+                  <label htmlFor="industry" className={labelClasses}>Industry</label>
+                  <div className="relative">
+                    <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input 
+                      {...register('industry')} 
+                      id="industry" 
+                      placeholder="e.g., SaaS, Fintech, Healthcare"
+                      className={`${inputClasses} pl-10`}
+                    />
+                  </div>
+                  {errors.industry && <p className="text-danger text-sm mt-1">{errors.industry.message}</p>}
+                </div>
+                <div>
+                  <label htmlFor="stage" className={labelClasses}>Current Stage</label>
+                  <select {...register('stage')} id="stage" className={inputClasses}>
+                    <option value="idea">💡 Idea Stage</option>
+                    <option value="mvp">🚀 MVP Stage</option>
+                    <option value="growth">📈 Growth Stage</option>
+                    <option value="scale">🏢 Scale Stage</option>
+                  </select>
+                  {errors.stage && <p className="text-danger text-sm mt-1">{errors.stage.message}</p>}
+                </div>
+              </div>
+            )}
+
+            {currentStep === 2 && (
+              <div className="space-y-5">
+                <div>
+                  <label htmlFor="initialCash" className={labelClasses}>Current Cash Balance ($)</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input 
+                      {...register('initialCash', { valueAsNumber: true })} 
+                      id="initialCash" 
+                      type="number" 
+                      placeholder="500000"
+                      className={`${inputClasses} pl-10`}
+                    />
+                  </div>
+                  {errors.initialCash && <p className="text-danger text-sm mt-1">{errors.initialCash.message}</p>}
+                </div>
+                <div>
+                  <label htmlFor="monthlyBurn" className={labelClasses}>Average Monthly Burn ($)</label>
+                  <div className="relative">
+                    <TrendingDown className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input 
+                      {...register('monthlyBurn', { valueAsNumber: true })} 
+                      id="monthlyBurn" 
+                      type="number" 
+                      placeholder="50000"
+                      className={`${inputClasses} pl-10`}
+                    />
+                  </div>
+                  {errors.monthlyBurn && <p className="text-danger text-sm mt-1">{errors.monthlyBurn.message}</p>}
+                </div>
+                <p className="text-xs text-gray-400">
+                  This helps us calculate your runway and provide accurate insights.
+                </p>
+              </div>
+            )}
+
+            {currentStep === 3 && (
+              <div className="text-center py-8">
+                <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-success/10 mb-4">
+                  <CheckCircle className="h-8 w-8 text-success" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">You're all set!</h3>
+                <p className="text-gray-500">Click finish to start exploring your dashboard and AI-powered insights.</p>
+              </div>
+            )}
+
+            <div className="mt-8 flex justify-between pt-6 border-t border-gray-100">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleBack} 
+                disabled={currentStep === 1}
+              >
+                Back
+              </Button>
+              {currentStep < 3 ? (
+                <Button type="button" onClick={handleNext}>
+                  Continue
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              ) : (
+                <Button type="submit" disabled={isPending}>
+                  {isPending && <Loader2 className="h-4 w-4 animate-spin mr-2"/>}
+                  Finish Setup
+                </Button>
+              )}
+            </div>
+          </form>
+        </div>
+
+        {/* Footer */}
+        <p className="text-center text-xs text-gray-400 mt-6">
+          You can update these settings anytime from your profile.
+        </p>
       </div>
     </div>
   );

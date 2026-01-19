@@ -4,6 +4,7 @@ import { RoadmapDetailPage } from './RoadmapDetailPage';
 import * as RoadmapHooks from '@/hooks/useRoadmaps';
 import type { Roadmap } from '@/types/roadmap.types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemoryRouter } from 'react-router-dom';
 
 // Mock the useParams hook from react-router-dom
 vi.mock('react-router-dom', async () => {
@@ -16,7 +17,9 @@ vi.mock('react-router-dom', async () => {
 
 const queryClient = new QueryClient();
 const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <MemoryRouter>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    </MemoryRouter>
 );
 
 describe('RoadmapDetailPage', () => {
@@ -43,7 +46,8 @@ describe('RoadmapDetailPage', () => {
     // Use `waitFor` to ensure all state updates from the hook have been processed
     await waitFor(() => {
       expect(screen.getByText('Detailed Test Roadmap')).toBeInTheDocument();
-      expect(screen.getByText(/Phase 1: Discovery/i)).toBeInTheDocument();
+      // Phase name is now shown without "Phase X:" prefix in new design
+      expect(screen.getByText('Discovery')).toBeInTheDocument();
       expect(screen.getByText('First Task')).toBeInTheDocument();
     });
   });

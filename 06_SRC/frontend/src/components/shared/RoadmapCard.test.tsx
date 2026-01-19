@@ -22,6 +22,7 @@ describe('RoadmapCard', () => {
 
     expect(screen.getByText('Test Roadmap')).toBeInTheDocument();
     expect(screen.getByText(/12 weeks/i)).toBeInTheDocument();
-    expect(screen.getByText(/50% complete/i)).toBeInTheDocument();
+    // Progress is now shown as just "50%" in the new design
+    expect(screen.getByText('50%')).toBeInTheDocument();
   });
 });

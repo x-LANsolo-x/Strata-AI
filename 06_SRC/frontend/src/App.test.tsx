@@ -26,7 +26,7 @@ describe('App', () => {
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
     
-    // Should have login button
-    expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument();
+    // Should have login button (now says "Sign In")
+    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
   });
 });

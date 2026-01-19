@@ -17,21 +17,30 @@ export function IdeationPage() {
 
   return (
     <div className="space-y-8">
-      <div className="text-center">
-        <BrainCircuit className="mx-auto h-12 w-12 text-gray-400" />
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">AI Ideation Engine</h1>
-        <p className="mt-2 text-lg text-gray-600">Discover your next strategic move. Describe your current situation to generate pivot ideas.</p>
+      {/* Hero Section */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-card p-8 text-center">
+        <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-50 mb-4">
+          <BrainCircuit className="h-7 w-7 text-primary-500" />
+        </div>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">AI Ideation Engine</h2>
+        <p className="text-gray-500 max-w-lg mx-auto">
+          Discover your next strategic move. Describe your current situation to generate AI-powered pivot and growth ideas.
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
+      {/* Input Form */}
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 shadow-card p-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Describe your startup situation
+        </label>
         <textarea
           value={context}
           onChange={(e) => setContext(e.target.value)}
           rows={4}
-          className="w-full p-4 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-black"
+          className="w-full p-4 border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none transition-colors resize-none"
           placeholder="e.g., 'We are a B2C subscription app for dog walkers with 100 paying users, but growth has stalled...'"
         />
-        <div className="mt-4 flex justify-center">
+        <div className="mt-4 flex justify-end">
           <Button type="submit" disabled={isPending || !context.trim()}>
             {isPending ? (
               <>
@@ -48,16 +57,29 @@ export function IdeationPage() {
         </div>
       </form>
 
+      {/* Loading State */}
       <AnimatePresence>
         {isPending && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center text-gray-600">
-            AI is thinking... this can take a moment.
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+            className="flex items-center justify-center gap-3 text-gray-500 py-8"
+          >
+            <Loader2 className="h-5 w-5 animate-spin text-primary-500" />
+            <span>AI is thinking... this can take a moment.</span>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {isError && <div className="text-red-500 text-center">An error occurred while generating ideas.</div>}
+      {/* Error State */}
+      {isError && (
+        <div className="bg-danger/10 border border-danger text-danger px-4 py-3 rounded-xl text-center">
+          An error occurred while generating ideas. Please try again.
+        </div>
+      )}
 
+      {/* Results */}
       {isSuccess && ideas && (
         <motion.div
           className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
