@@ -1,0 +1,582 @@
+# 🎨 Frontend Architecture
+
+## 1. Overview
+
+STRATA-AI frontend is a React Single Page Application (SPA) built with modern tooling for performance and developer experience.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    FRONTEND ARCHITECTURE                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │                    App Shell                             │    │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────┐  │    │
+│  │  │   Router    │  │   Layout    │  │  Error Boundary │  │    │
+│  │  └─────────────┘  └─────────────┘  └─────────────────┘  │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                              │                                   │
+│  ┌───────────────────────────┴───────────────────────────────┐  │
+│  │                      Pages                                 │  │
+│  │  ┌────────┐ ┌──────────┐ ┌──────────┐ ┌────────────────┐  │  │
+│  │  │  Auth  │ │Dashboard │ │Scenarios │ │   Ideation     │  │  │
+│  │  └────────┘ └──────────┘ └──────────┘ └────────────────┘  │  │
+│  │  ┌────────┐ ┌──────────┐ ┌──────────┐ ┌────────────────┐  │  │
+│  │  │Roadmap │ │Financials│ │ Settings │ │   Onboarding   │  │  │
+│  │  └────────┘ └──────────┘ └──────────┘ └────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                              │                                   │
+│  ┌───────────────────────────┴───────────────────────────────┐  │
+│  │                   Shared Components                        │  │
+│  │  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐   │  │
+│  │  │ Charts │ │ Forms  │ │ Tables │ │ Modals │ │ Cards  │   │  │
+│  │  └────────┘ └────────┘ └────────┘ └────────┘ └────────┘   │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                              │                                   │
+│  ┌───────────────────────────┴───────────────────────────────┐  │
+│  │                    State Management                        │  │
+│  │  ┌─────────────────────┐  ┌─────────────────────────────┐ │  │
+│  │  │   React Query       │  │   Zustand (minimal)         │ │  │
+│  │  │   (Server State)    │  │   (Client State)            │ │  │
+│  │  └─────────────────────┘  └─────────────────────────────┘ │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## 2. Technology Stack
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| React | 18.2+ | UI Framework |
+| TypeScript | 5.0+ | Type Safety |
+| Vite | 5.0+ | Build Tool |
+| Tailwind CSS | 3.4+ | Styling |
+| React Router | 6.0+ | Routing |
+| TanStack Query | 5.0+ | Server State |
+| Zustand | 4.0+ | Client State |
+| React Hook Form | 7.0+ | Forms |
+| Zod | 3.0+ | Validation |
+| Chart.js | 4.0+ | Charts |
+| Framer Motion | 10.0+ | Animations |
+| Axios | 1.6+ | HTTP Client |
+| Lucide React | Latest | Icons |
+
+## 3. Project Structure
+
+```
+src/
+├── main.tsx                 # Entry point
+├── App.tsx                  # Root component
+├── vite-env.d.ts           # Vite types
+│
+├── assets/                  # Static assets
+│   ├── images/
+│   └── fonts/
+│
+├── components/              # Shared components
+│   ├── ui/                  # Base UI components
+│   │   ├── Button.tsx
+│   │   ├── Input.tsx
+│   │   ├── Card.tsx
+│   │   ├── Modal.tsx
+│   │   ├── Dropdown.tsx
+│   │   ├── Toast.tsx
+│   │   ├── Spinner.tsx
+│   │   └── index.ts
+│   │
+│   ├── charts/              # Chart components
+│   │   ├── RunwayGauge.tsx
+│   │   ├── CashFlowChart.tsx
+│   │   ├── BurnRateChart.tsx
+│   │   ├── ScenarioCompare.tsx
+│   │   └── index.ts
+│   │
+│   ├── forms/               # Form components
+│   │   ├── FinancialEntryForm.tsx
+│   │   ├── ScenarioForm.tsx
+│   │   ├── StartupProfileForm.tsx
+│   │   └── index.ts
+│   │
+│   ├── layout/              # Layout components
+│   │   ├── Header.tsx
+│   │   ├── Sidebar.tsx
+│   │   ├── Footer.tsx
+│   │   ├── MainLayout.tsx
+│   │   └── AuthLayout.tsx
+│   │
+│   └── shared/              # Other shared components
+│       ├── AlertBanner.tsx
+│       ├── EmptyState.tsx
+│       ├── LoadingScreen.tsx
+│       ├── ErrorFallback.tsx
+│       └── ProtectedRoute.tsx
+│
+├── pages/                   # Page components
+│   ├── auth/
+│   │   ├── LoginPage.tsx
+│   │   ├── RegisterPage.tsx
+│   │   └── ForgotPasswordPage.tsx
+│   │
+│   ├── onboarding/
+│   │   ├── OnboardingWizard.tsx
+│   │   ├── steps/
+│   │   │   ├── StartupBasics.tsx
+│   │   │   ├── FinancialSnapshot.tsx
+│   │   │   ├── TeamComposition.tsx
+│   │   │   └── Goals.tsx
+│   │   └── index.ts
+│   │
+│   ├── dashboard/
+│   │   ├── DashboardPage.tsx
+│   │   ├── components/
+│   │   │   ├── RunwayCard.tsx
+│   │   │   ├── AlertsPanel.tsx
+│   │   │   ├── QuickActions.tsx
+│   │   │   └── MetricsGrid.tsx
+│   │   └── index.ts
+│   │
+│   ├── financials/
+│   │   ├── FinancialsPage.tsx
+│   │   ├── FinancialEntryPage.tsx
+│   │   ├── ImportCSVPage.tsx
+│   │   └── index.ts
+│   │
+│   ├── scenarios/
+│   │   ├── ScenariosPage.tsx
+│   │   ├── ScenarioDetailPage.tsx
+│   │   ├── CreateScenarioPage.tsx
+│   │   ├── CompareScenarioPage.tsx
+│   │   └── index.ts
+│   │
+│   ├── ideation/
+│   │   ├── IdeationPage.tsx
+│   │   ├── IdeaDetailPage.tsx
+│   │   ├── components/
+│   │   │   ├── IdeaCard.tsx
+│   │   │   ├── IdeaGenerator.tsx
+│   │   │   └── ConstraintsForm.tsx
+│   │   └── index.ts
+│   │
+│   ├── roadmaps/
+│   │   ├── RoadmapsPage.tsx
+│   │   ├── RoadmapDetailPage.tsx
+│   │   ├── components/
+│   │   │   ├── PhaseCard.tsx
+│   │   │   ├── TaskList.tsx
+│   │   │   ├── Timeline.tsx
+│   │   │   └── ProgressBar.tsx
+│   │   └── index.ts
+│   │
+│   └── settings/
+│       ├── SettingsPage.tsx
+│       ├── ProfileSettings.tsx
+│       ├── AlertSettings.tsx
+│       └── index.ts
+│
+├── hooks/                   # Custom hooks
+│   ├── useAuth.ts
+│   ├── useStartup.ts
+│   ├── useRunway.ts
+│   ├── useScenarios.ts
+│   ├── useIdeas.ts
+│   ├── useRoadmaps.ts
+│   ├── useFinancials.ts
+│   └── useSettings.ts
+│
+├── services/                # API services
+│   ├── api.ts               # Axios instance
+│   ├── auth.service.ts
+│   ├── startup.service.ts
+│   ├── financial.service.ts
+│   ├── runway.service.ts
+│   ├── scenario.service.ts
+│   ├── ai.service.ts
+│   ├── roadmap.service.ts
+│   └── settings.service.ts
+│
+├── stores/                  # Zustand stores
+│   ├── authStore.ts
+│   └── uiStore.ts
+│
+├── types/                   # TypeScript types
+│   ├── auth.types.ts
+│   ├── startup.types.ts
+│   ├── financial.types.ts
+│   ├── scenario.types.ts
+│   ├── idea.types.ts
+│   ├── roadmap.types.ts
+│   └── api.types.ts
+│
+├── utils/                   # Utility functions
+│   ├── format.ts            # Formatters (currency, date)
+│   ├── calculations.ts      # Financial calculations
+│   ├── validation.ts        # Zod schemas
+│   └── constants.ts
+│
+├── styles/                  # Global styles
+│   └── globals.css          # Tailwind imports
+│
+└── config/                  # Configuration
+    ├── routes.ts            # Route definitions
+    └── queryClient.ts       # React Query config
+```
+
+## 4. Routing Structure
+
+```typescript
+// src/config/routes.ts
+
+export const routes = {
+  // Public routes
+  login: '/login',
+  register: '/register',
+  forgotPassword: '/forgot-password',
+  
+  // Onboarding
+  onboarding: '/onboarding',
+  
+  // Protected routes
+  dashboard: '/',
+  
+  // Financials
+  financials: '/financials',
+  financialsEntry: '/financials/entry',
+  financialsImport: '/financials/import',
+  
+  // Scenarios
+  scenarios: '/scenarios',
+  scenarioCreate: '/scenarios/create',
+  scenarioDetail: '/scenarios/:id',
+  scenarioCompare: '/scenarios/compare',
+  
+  // Ideation
+  ideation: '/ideation',
+  ideaDetail: '/ideation/:id',
+  
+  // Roadmaps
+  roadmaps: '/roadmaps',
+  roadmapDetail: '/roadmaps/:id',
+  
+  // Settings
+  settings: '/settings',
+  settingsProfile: '/settings/profile',
+  settingsAlerts: '/settings/alerts',
+};
+```
+
+## 5. Component Examples
+
+### 5.1 RunwayGauge Component
+
+```typescript
+// src/components/charts/RunwayGauge.tsx
+
+import { useMemo } from 'react';
+import { motion } from 'framer-motion';
+
+interface RunwayGaugeProps {
+  months: number;
+  trend: 'improving' | 'stable' | 'declining';
+  className?: string;
+}
+
+export function RunwayGauge({ months, trend, className }: RunwayGaugeProps) {
+  const { color, label, percentage } = useMemo(() => {
+    if (months < 3) return { color: 'red', label: 'Critical', percentage: 15 };
+    if (months < 6) return { color: 'orange', label: 'Warning', percentage: 35 };
+    if (months < 12) return { color: 'yellow', label: 'Caution', percentage: 60 };
+    return { color: 'green', label: 'Healthy', percentage: 85 };
+  }, [months]);
+
+  return (
+    <div className={`bg-white rounded-xl p-6 shadow-sm ${className}`}>
+      <h3 className="text-sm font-medium text-gray-500 mb-4">Current Runway</h3>
+      
+      {/* Gauge visualization */}
+      <div className="relative h-32 flex items-center justify-center">
+        <svg viewBox="0 0 100 50" className="w-full max-w-[200px]">
+          {/* Background arc */}
+          <path
+            d="M 10 50 A 40 40 0 0 1 90 50"
+            fill="none"
+            stroke="#e5e7eb"
+            strokeWidth="8"
+            strokeLinecap="round"
+          />
+          {/* Value arc */}
+          <motion.path
+            d="M 10 50 A 40 40 0 0 1 90 50"
+            fill="none"
+            stroke={`var(--color-${color}-500)`}
+            strokeWidth="8"
+            strokeLinecap="round"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: percentage / 100 }}
+            transition={{ duration: 1, ease: 'easeOut' }}
+          />
+        </svg>
+        
+        {/* Center text */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-3xl font-bold">{months.toFixed(1)}</span>
+          <span className="text-sm text-gray-500">months</span>
+        </div>
+      </div>
+      
+      {/* Status badge */}
+      <div className="flex items-center justify-between mt-4">
+        <span className={`px-2 py-1 rounded-full text-xs font-medium bg-${color}-100 text-${color}-700`}>
+          {label}
+        </span>
+        <span className={`text-sm ${trend === 'declining' ? 'text-red-500' : 'text-green-500'}`}>
+          {trend === 'declining' ? '↓' : trend === 'improving' ? '↑' : '→'} {trend}
+        </span>
+      </div>
+    </div>
+  );
+}
+```
+
+### 5.2 useRunway Hook
+
+```typescript
+// src/hooks/useRunway.ts
+
+import { useQuery } from '@tanstack/react-query';
+import { runwayService } from '@/services/runway.service';
+import { RunwayData, ProjectionParams, ProjectionResult } from '@/types/runway.types';
+
+export function useRunway() {
+  return useQuery<RunwayData>({
+    queryKey: ['runway', 'current'],
+    queryFn: () => runwayService.getCurrent(),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useRunwayProjection(params: ProjectionParams) {
+  return useQuery<ProjectionResult>({
+    queryKey: ['runway', 'projection', params],
+    queryFn: () => runwayService.project(params),
+    enabled: !!params.targetDate,
+  });
+}
+```
+
+### 5.3 API Service
+
+```typescript
+// src/services/api.ts
+
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { useAuthStore } from '@/stores/authStore';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+
+export const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor - add auth token
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const token = useAuthStore.getState().token;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Response interceptor - handle errors
+api.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      useAuthStore.getState().logout();
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+```
+
+### 5.4 Auth Store (Zustand)
+
+```typescript
+// src/stores/authStore.ts
+
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { User } from '@/types/auth.types';
+
+interface AuthState {
+  user: User | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  setAuth: (user: User, token: string) => void;
+  logout: () => void;
+}
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      
+      setAuth: (user, token) => set({
+        user,
+        token,
+        isAuthenticated: true,
+      }),
+      
+      logout: () => set({
+        user: null,
+        token: null,
+        isAuthenticated: false,
+      }),
+    }),
+    {
+      name: 'auth-storage',
+      partialize: (state) => ({ token: state.token }),
+    }
+  )
+);
+```
+
+## 6. State Management Strategy
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    STATE MANAGEMENT                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  SERVER STATE (React Query)           CLIENT STATE (Zustand)    │
+│  ─────────────────────────            ───────────────────────   │
+│                                                                  │
+│  • User data                          • Auth token              │
+│  • Startup profile                    • UI state (modals,       │
+│  • Financial records                    sidebars, themes)       │
+│  • Scenarios                          • Form drafts             │
+│  • Ideas                              • Temporary selections    │
+│  • Roadmaps                                                      │
+│  • Settings                                                      │
+│                                                                  │
+│  Features:                            Features:                  │
+│  • Automatic caching                  • Persist to localStorage │
+│  • Background refetching              • Simple API              │
+│  • Optimistic updates                 • No boilerplate          │
+│  • Infinite queries                                              │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## 7. Form Handling
+
+```typescript
+// Example: Financial Entry Form with React Hook Form + Zod
+
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+const financialEntrySchema = z.object({
+  month: z.string().regex(/^\d{4}-\d{2}$/, 'Invalid month format'),
+  revenue: z.object({
+    recurring: z.number().min(0),
+    oneTime: z.number().min(0),
+  }),
+  expenses: z.object({
+    salaries: z.number().min(0),
+    marketing: z.number().min(0),
+    infrastructure: z.number().min(0),
+    office: z.number().min(0),
+    legal: z.number().min(0),
+    other: z.number().min(0),
+  }),
+  cashBalanceEnd: z.number().min(0),
+  notes: z.string().optional(),
+});
+
+type FinancialEntryForm = z.infer<typeof financialEntrySchema>;
+
+export function FinancialEntryForm() {
+  const { register, handleSubmit, formState: { errors } } = useForm<FinancialEntryForm>({
+    resolver: zodResolver(financialEntrySchema),
+  });
+  
+  const onSubmit = (data: FinancialEntryForm) => {
+    // Submit to API
+  };
+  
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      {/* Form fields */}
+    </form>
+  );
+}
+```
+
+## 8. Error Handling
+
+```typescript
+// src/components/shared/ErrorFallback.tsx
+
+import { FallbackProps } from 'react-error-boundary';
+import { Button } from '@/components/ui';
+
+export function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center p-8">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          Something went wrong
+        </h1>
+        <p className="text-gray-600 mb-4">
+          {error.message || 'An unexpected error occurred'}
+        </p>
+        <Button onClick={resetErrorBoundary}>
+          Try again
+        </Button>
+      </div>
+    </div>
+  );
+}
+```
+
+## 9. Performance Optimizations
+
+| Technique | Implementation |
+|-----------|----------------|
+| **Code Splitting** | React.lazy() for route-based splitting |
+| **Memoization** | useMemo, useCallback for expensive computations |
+| **Virtualization** | Virtual lists for large data sets |
+| **Image Optimization** | Lazy loading, WebP format |
+| **Bundle Analysis** | Vite bundle analyzer |
+| **Caching** | React Query with stale-while-revalidate |
+
+## 10. Responsive Design
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    BREAKPOINTS (Tailwind)                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Mobile (< 640px)     │  Tablet (640-1024px)  │  Desktop (1024+) │
+│  ─────────────────    │  ──────────────────   │  ──────────────  │
+│                       │                        │                  │
+│  • Single column      │  • Two columns         │  • Full sidebar  │
+│  • Bottom nav         │  • Collapsible sidebar │  • Multi-column  │
+│  • Stacked cards      │  • Responsive charts   │  • Side-by-side  │
+│  • Simplified charts  │                        │    comparisons   │
+│                       │                        │                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+**Next:** See [06_security_architecture.md](./06_security_architecture.md) for security implementation details.
