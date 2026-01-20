@@ -2,7 +2,7 @@
 STRATA-AI Backend - Optimized for Production
 """
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import ORJSONResponse
@@ -11,6 +11,7 @@ from app.db.engine import init_db, close_db
 from app.api.v1.endpoints import auth, financials, ai, forecast, scenarios, roadmaps
 import time
 import logging
+from typing import Callable
 
 # Configure logging
 logging.basicConfig(level=logging.INFO if not settings.DEBUG else logging.DEBUG)
@@ -74,13 +75,34 @@ app.add_middleware(
 )
 
 
-# Request timing middleware (useful for performance monitoring)
+# Request timing and caching middleware
 @app.middleware("http")
-async def add_process_time_header(request: Request, call_next):
+async def add_headers_middleware(request: Request, call_next: Callable):
     start_time = time.perf_counter()
     response = await call_next(request)
     process_time = time.perf_counter() - start_time
+    
+    # Add timing header
     response.headers["X-Process-Time"] = f"{process_time:.4f}"
+    
+    # Add cache control headers based on endpoint
+    path = request.url.path
+    
+    # Static/reference data - cache for 1 hour
+    if any(p in path for p in ["/methods", "/templates", "/health"]):
+        response.headers["Cache-Control"] = "public, max-age=3600"
+    # User-specific data - no caching
+    elif any(p in path for p in ["/auth", "/financials", "/roadmaps"]):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+    # AI/forecast results - short cache (5 min)
+    elif any(p in path for p in ["/forecast", "/scenarios", "/ai"]):
+        response.headers["Cache-Control"] = "private, max-age=300"
+    
+    # Security headers
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    
     return response
 
 

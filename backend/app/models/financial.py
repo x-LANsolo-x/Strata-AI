@@ -26,5 +26,7 @@ class FinancialRecord(Document):
     class Settings:
         name = "financial_records"
         indexes = [
-            [("user", 1), ("month", 1)]  # One record per month per user
+            [("user", 1), ("month", -1)],  # Primary: user + month (desc for recent first)
+            [("user", 1), ("created_at", -1)],  # For listing recent records
+            [("month", -1)],  # For date-range queries
         ]
