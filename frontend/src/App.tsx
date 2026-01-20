@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Router } from './Router';
-import { ModalController } from './components/shared/ModalController';
 
 // Optimized QueryClient configuration for production
 const queryClient = new QueryClient({
@@ -38,7 +37,6 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router />
-      <ModalController />
     </QueryClientProvider>
   );
 }

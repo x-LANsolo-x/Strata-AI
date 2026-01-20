@@ -18,6 +18,7 @@ import {
   Calculator,
   Briefcase
 } from 'lucide-react';
+import logoSvg from '@/assets/logo.svg';
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/stores/auth.store';
 import { createStartupProfile } from '@/services/startup.service';
@@ -340,9 +341,7 @@ export function SmartOnboarding() {
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 text-white mb-4">
-            <Sparkles className="w-8 h-8" />
-          </div>
+          <img src={logoSvg} alt="Strata-AI Logo" className="w-16 h-16 mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-gray-900">Welcome to Strata</h1>
           <p className="text-gray-500 mt-2">Let's get to know your startup</p>
         </div>

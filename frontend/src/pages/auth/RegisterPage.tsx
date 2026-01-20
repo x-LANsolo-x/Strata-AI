@@ -20,6 +20,7 @@ export function RegisterPage() {
   const navigate = useNavigate();
   const { login: loginUser } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -27,12 +28,18 @@ export function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsSubmitting(true);
+    setErrorMessage(null);
     try {
       const { user, token } = await registerService(data.fullName, data.email, data.password);
       loginUser(user, token);
       navigate('/onboarding'); // Always go to onboarding after register
     } catch (error) {
       console.error("Registration failed", error);
+      if (error instanceof Error) {
+        setErrorMessage(error.message || 'Registration failed. Please try again.');
+      } else {
+        setErrorMessage('Registration failed. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -44,6 +51,13 @@ export function RegisterPage() {
         <h2 className="text-2xl font-bold text-gray-900">Create an Account</h2>
         <p className="text-sm text-gray-500 mt-1">Start your journey to startup success</p>
       </div>
+
+      {/* Error Message */}
+      {errorMessage && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+          {errorMessage}
+        </div>
+      )}
 
       {/* Full Name Field */}
       <div>

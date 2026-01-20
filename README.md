@@ -39,13 +39,19 @@
 | Feature | Description | Status |
 |---------|-------------|--------|
 | **🔐 User Authentication** | Email/password + Google OAuth with JWT tokens | ✅ |
-| **🔑 Password Management** | Reset via email, change password when logged in | ✅ |
+| **🔑 Password Management** | Reset via email, change password in Settings | ✅ |
 | **📊 Financial Data Management** | Manual entry + CSV import for revenue, expenses, cash balance | ✅ |
+| **📥 Data Import** | Upload pitch decks, spreadsheets, bank statements, Stripe exports, Google Sheets | ✅ |
 | **📈 AI Runway Predictor** | Real-time runway calculation with trend analysis & alerts | ✅ |
 | **🔮 Future Condition Simulator** | Project financial health on any future date (1mo - 3yrs) | ✅ |
 | **🎯 What-If Scenario Analyzer** | Test hiring, pricing, funding scenarios before execution | ✅ |
 | **💡 AI Ideation Engine** | LLM-generated pivot strategies based on your context | ✅ |
 | **🗺️ Smart Execution Roadmaps** | Convert strategies into milestone-based action plans | ✅ |
+| **📊 Dashboard Tabs** | Overview, Analytics, and Reports views with different visualizations | ✅ |
+| **📄 CSV Report Generation** | Export detailed financial reports (6 types) as CSV files | ✅ |
+| **🔔 Notifications System** | Dynamic notifications based on financial data (runway alerts, etc.) | ✅ |
+| **🔍 Global Search** | Search across scenarios, roadmaps, reports, and pages | ✅ |
+| **📝 Scenario Details** | View detailed scenario information with impact metrics | ✅ |
 | **🤖 Hybrid LLM Provider** | Groq (default), OpenAI, Gemini, Ollama support | ✅ |
 
 ---
@@ -77,6 +83,122 @@ STRATA-AI supports multiple authentication methods:
 - 🔒 Account linking (email ↔ OAuth)
 - 🔒 Protected routes with authentication middleware
 - 🔒 Security headers (XSS, Clickjacking protection)
+
+---
+
+## 📊 Dashboard & Reports
+
+### Dashboard Tabs
+
+| Tab | Description |
+|-----|-------------|
+| **Overview** | Stats cards (Cash Balance, Burn Rate, Revenue, Runway), Cash Flow chart, Expense Breakdown, Revenue Comparison |
+| **Analytics** | Trend Analysis (growth metrics), Key Metrics (CAC, LTV, MRR) with progress indicators |
+| **Reports** | Generate and download 6 types of CSV reports |
+
+### Available Reports (CSV Export)
+
+| Report | Description |
+|--------|-------------|
+| **Monthly Summary** | Current month financial overview with revenue, expenses, cash flow |
+| **Cash Flow Statement** | Monthly cash inflows/outflows with balances |
+| **Expense Breakdown** | Categorized expenses (salaries, marketing, infrastructure, other) |
+| **Runway Analysis** | Current runway status with projection scenarios |
+| **Revenue Analysis** | Revenue breakdown (recurring vs one-time) with trends |
+| **Investor Update** | Executive summary with key metrics for investors |
+
+---
+
+## 🔔 Notifications System
+
+Dynamic notifications based on your financial data:
+
+| Notification Type | Trigger | Action |
+|-------------------|---------|--------|
+| **Runway Warning** | Runway < 6 months | Links to Dashboard |
+| **Critical Runway** | Runway < 3 months | Links to Scenarios |
+| **High Burn Rate** | Burn > $50k/month | Links to Analytics |
+| **Positive Cash Flow** | Net positive revenue | Celebration message |
+| **Welcome** | New user with no data | Links to Settings/Import |
+
+Features:
+- 🔴 Red dot indicator for unread notifications
+- ✅ Mark individual or all notifications as read
+- 🔗 Click to navigate to relevant page
+- ⏰ Human-readable timestamps ("2 hours ago")
+
+---
+
+## 🔍 Global Search
+
+Search across your entire workspace:
+
+| Searchable | Examples |
+|------------|----------|
+| **Scenarios** | By name or type (hire, pricing, cost-cutting) |
+| **Roadmaps** | By title or description |
+| **Reports** | Keywords like "export", "csv", "monthly" |
+| **Pages** | Dashboard, Settings, Ideation, etc. |
+
+Features:
+- 🔎 Debounced search (300ms delay)
+- 📋 Results grouped by type with icons
+- ❌ Clear button to reset search
+- 🖱️ Click outside to close dropdown
+
+---
+
+## 📝 Scenario Management
+
+### Scenario Detail Page
+
+View comprehensive scenario information:
+- **Header**: Scenario name, type icon, runway impact badge
+- **Metrics Grid**: New Runway, Runway Impact, New Burn Rate, Created Date
+- **Modifications**: Monthly expense/revenue changes, one-time cash impact
+
+### Creating Scenarios
+
+Click "New Scenario" to open the creation modal:
+- Scenario name and type selection
+- Monthly expense/revenue change inputs
+- Automatic runway impact calculation
+
+---
+
+## 📊 Analytics Tab (Empty States)
+
+The Analytics tab shows helpful empty states when no data is connected:
+- **Trend Analysis**: "No trend data available - Import financial data to see trends"
+- **Key Metrics**: "No metrics available - Import financial data to see key metrics"
+
+This ensures users are never confused by placeholder/mock data.
+
+---
+
+## 💡 Modal System
+
+Context-aware modals for creating content:
+
+| Page | Button | Modal |
+|------|--------|-------|
+| `/scenarios` | New Scenario | Create scenario with financial modifications |
+| `/ideation` | Generate Ideas | AI ideation with context input |
+| `/roadmaps` | New Roadmap | AI-generated or manual roadmap creation |
+
+---
+
+## ⚙️ Settings Page
+
+| Tab | Features |
+|-----|----------|
+| **My Profile** | Update display name |
+| **Startup Profile** | Edit startup name, industry, stage, team size |
+| **Alert Thresholds** | Configure runway warning/critical thresholds, currency |
+| **Security** | Change password with current password verification |
+| **Import Data** | Upload files (Pitch Deck, Spreadsheet, Bank Statement, Stripe), Connect Google Sheets |
+| **LLM Provider** | View current AI provider configuration |
+| **Data & Account** | Export all data, delete account |
 
 ---
 
@@ -118,12 +240,14 @@ strata-ai/
 ├── backend/                    # FastAPI Backend
 │   ├── app/
 │   │   ├── api/v1/endpoints/   # API route handlers
-│   │   │   ├── auth.py         # Authentication (email, Google OAuth)
+│   │   │   ├── auth.py         # Authentication (email, Google OAuth, password mgmt)
 │   │   │   ├── financials.py   # Financial data CRUD
 │   │   │   ├── forecast.py     # Future projections
 │   │   │   ├── scenarios.py    # What-if analysis
 │   │   │   ├── ai.py           # AI strategy suggestions
-│   │   │   └── roadmaps.py     # Execution roadmaps
+│   │   │   ├── roadmaps.py     # Execution roadmaps
+│   │   │   ├── startup.py      # Startup profile & settings
+│   │   │   └── onboarding.py   # Data import & extraction
 │   │   ├── core/               # Config & security
 │   │   ├── db/                 # Database connection
 │   │   ├── models/             # MongoDB document models
@@ -141,20 +265,21 @@ strata-ai/
 │   │   ├── assets/             # Static assets (logo, images)
 │   │   ├── components/
 │   │   │   ├── auth/           # GoogleSignInButton
-│   │   │   ├── charts/         # Financial visualizations
-│   │   │   ├── forms/          # Input forms
-│   │   │   ├── layout/         # Header, Sidebar, MainLayout
-│   │   │   ├── shared/         # Common components
-│   │   │   └── ui/             # Base UI elements
+│   │   │   ├── charts/         # CashFlowChart, ExpenseBreakdown, RevenueComparison, RunwayGauge
+│   │   │   ├── forms/          # ScenarioForm
+│   │   │   ├── layout/         # Header, Sidebar, MainLayout, AuthLayout
+│   │   │   ├── shared/         # StatCard, RoadmapCard, ScenarioCard, IdeaCard, ProtectedRoute
+│   │   │   └── ui/             # Button, Modal
 │   │   ├── pages/
 │   │   │   ├── auth/           # Login, Register, ForgotPassword, ResetPassword
-│   │   │   ├── dashboard/      # Main dashboard
+│   │   │   ├── dashboard/      # Main dashboard (Overview, Analytics, Reports tabs)
 │   │   │   ├── scenarios/      # Scenario analyzer
 │   │   │   ├── ideation/       # AI suggestions
 │   │   │   ├── roadmaps/       # Execution plans
-│   │   │   └── onboarding/     # Setup wizard
-│   │   ├── services/           # API client & services
-│   │   ├── stores/             # Zustand state stores
+│   │   │   ├── settings/       # User settings (Profile, Security, Import Data, etc.)
+│   │   │   └── onboarding/     # Smart onboarding wizard
+│   │   ├── services/           # API client & services (dashboard, auth, reports)
+│   │   ├── stores/             # Zustand state stores (auth, ui with tabs)
 │   │   ├── hooks/              # Custom React hooks
 │   │   └── types/              # TypeScript definitions
 │   ├── package.json
@@ -277,6 +402,20 @@ Frontend available at: **http://localhost:5173**
 |----------|--------|------|-------------|
 | `/api/v1/ai/suggest-strategy` | POST | ✅ | Get AI pivot suggestions |
 | `/api/v1/roadmaps/` | GET/POST | ✅ | Manage execution roadmaps |
+
+### Startup & Settings
+
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/v1/startup/profile` | GET/PUT | ✅ | Get/update startup profile |
+| `/api/v1/startup/settings` | GET/PUT | ✅ | User settings & preferences |
+
+### Data Import (Onboarding)
+
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/v1/onboarding/extract-from-file-enhanced` | POST | ✅ | Extract data from uploaded files |
+| `/api/v1/onboarding/connect-google-sheets` | POST | ✅ | Connect Google Sheets data |
 
 ---
 

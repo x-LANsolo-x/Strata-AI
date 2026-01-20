@@ -2,6 +2,7 @@ import { Outlet, useLocation } from 'react-router-dom'; // Import useLocation
 import { motion } from 'framer-motion';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
+import { ModalController } from '@/components/shared/ModalController';
 
 export function MainLayout() {
   const location = useLocation(); // Get the current location
@@ -21,6 +22,8 @@ export function MainLayout() {
           <Outlet />
         </motion.main>
       </div>
+      {/* Modal Controller - renders modals based on UI state */}
+      <ModalController />
     </div>
   );
 }

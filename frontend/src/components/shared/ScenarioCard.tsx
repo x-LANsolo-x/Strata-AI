@@ -1,5 +1,6 @@
 import type { Scenario } from '@/types/scenario.types';
 import { ArrowUpRight, ArrowDownRight, BarChart3, DollarSign, Users, TrendingDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface ScenarioCardProps {
   scenario: Scenario;
@@ -7,20 +8,30 @@ interface ScenarioCardProps {
 
 // Icon mapping based on scenario type
 const typeIcons: Record<string, React.ElementType> = {
+  hire: Users,
   hiring: Users,
   pricing: DollarSign,
+  'cut_expense': TrendingDown,
   'cost-cutting': TrendingDown,
   default: BarChart3,
 };
 
 export function ScenarioCard({ scenario }: ScenarioCardProps) {
-  const { name, type, result } = scenario;
+  const navigate = useNavigate();
+  const { id, name, type, result } = scenario;
   const isPositive = result.runwayDelta >= 0;
   const DeltaIcon = isPositive ? ArrowUpRight : ArrowDownRight;
   const TypeIcon = typeIcons[type] || typeIcons.default;
 
+  const handleClick = () => {
+    navigate(`/scenarios/${id}`);
+  };
+
   return (
-    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-card hover:shadow-card-hover hover:border-primary-200 transition-all cursor-pointer group">
+    <div 
+      onClick={handleClick}
+      className="bg-white p-5 rounded-2xl border border-gray-100 shadow-card hover:shadow-card-hover hover:border-primary-200 transition-all cursor-pointer group"
+    >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">

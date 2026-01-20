@@ -1,11 +1,13 @@
 import { useParams, Link } from 'react-router-dom';
-import { useRoadmap } from '@/hooks/useRoadmaps';
+import { useRoadmap, useToggleTask } from '@/hooks/useRoadmaps';
 import { Loader2, CheckCircle, Circle, ArrowLeft, Clock, Target, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { useState } from 'react';
 
 export function RoadmapDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: roadmap, isLoading, isError } = useRoadmap(id!);
+  const toggleTask = useToggleTask();
 
   if (isLoading) {
     return (
@@ -142,24 +144,47 @@ export function RoadmapDetailPage() {
               )}
 
               {/* Tasks */}
-              <div className="p-5 space-y-3">
+              <div className="p-5 space-y-4">
                 {phase.tasks.map(task => (
                   <div 
-                    key={task.id} 
-                    className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                      task.isCompleted ? 'bg-success/5' : 'bg-gray-50 hover:bg-gray-100'
+                    key={task.id}
+                    className={`rounded-xl transition-colors ${
+                      task.isCompleted ? 'bg-success/5' : 'bg-gray-50'
                     }`}
                   >
-                    {task.isCompleted ? (
-                      <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
-                    ) : (
-                      <Circle className="h-5 w-5 text-gray-300 flex-shrink-0" />
-                    )}
-                    <span className={`text-sm ${
-                      task.isCompleted ? 'text-gray-500 line-through' : 'text-gray-700'
-                    }`}>
-                      {task.title}
-                    </span>
+                    <button 
+                      onClick={() => toggleTask.mutate({ 
+                        roadmapId: roadmap.id, 
+                        phaseId: phase.id, 
+                        taskId: task.id 
+                      })}
+                      disabled={toggleTask.isPending}
+                      className={`w-full flex items-start gap-3 p-4 cursor-pointer text-left hover:bg-gray-100/50 rounded-t-xl ${
+                        toggleTask.isPending ? 'opacity-50' : ''
+                      }`}
+                    >
+                      <div className="mt-0.5">
+                        {task.isCompleted ? (
+                          <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
+                        ) : (
+                          <Circle className="h-5 w-5 text-gray-300 flex-shrink-0" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <span className={`font-medium ${
+                          task.isCompleted ? 'text-gray-500 line-through' : 'text-gray-900'
+                        }`}>
+                          {task.title}
+                        </span>
+                        {task.description && (
+                          <p className={`mt-1 text-sm leading-relaxed ${
+                            task.isCompleted ? 'text-gray-400' : 'text-gray-600'
+                          }`}>
+                            {task.description}
+                          </p>
+                        )}
+                      </div>
+                    </button>
                   </div>
                 ))}
               </div>

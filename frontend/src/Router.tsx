@@ -42,6 +42,9 @@ const DashboardPage = lazy(() =>
 const ScenariosPage = lazy(() => 
   import('@/pages/scenarios/ScenariosPage').then(m => ({ default: m.ScenariosPage }))
 );
+const ScenarioDetailPage = lazy(() => 
+  import('@/pages/scenarios/ScenarioDetailPage').then(m => ({ default: m.ScenarioDetailPage }))
+);
 const IdeationPage = lazy(() => 
   import('@/pages/ideation/IdeationPage').then(m => ({ default: m.IdeationPage }))
 );
@@ -87,6 +90,7 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: withSuspense(DashboardPage) },
           { path: 'scenarios', element: withSuspense(ScenariosPage) },
+          { path: 'scenarios/:id', element: withSuspense(ScenarioDetailPage) },
           { path: 'ideation', element: withSuspense(IdeationPage) },
           { path: 'roadmaps', element: withSuspense(RoadmapsPage) },
           { path: 'roadmaps/:id', element: withSuspense(RoadmapDetailPage) },

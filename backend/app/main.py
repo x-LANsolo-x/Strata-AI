@@ -8,7 +8,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import ORJSONResponse
 from app.core.config import settings
 from app.db.engine import init_db, close_db
-from app.api.v1.endpoints import auth, financials, ai, forecast, scenarios, roadmaps
+from app.api.v1.endpoints import auth, financials, ai, forecast, scenarios, roadmaps, startup
 import time
 import logging
 from typing import Callable
@@ -113,6 +113,7 @@ app.include_router(ai.router, prefix=f"{settings.API_V1_STR}/ai", tags=["ai"])
 app.include_router(forecast.router, prefix=f"{settings.API_V1_STR}/forecast", tags=["forecast"])
 app.include_router(scenarios.router, prefix=f"{settings.API_V1_STR}/scenarios", tags=["scenarios"])
 app.include_router(roadmaps.router, prefix=f"{settings.API_V1_STR}/roadmaps", tags=["roadmaps"])
+app.include_router(startup.router, prefix=f"{settings.API_V1_STR}/startup", tags=["startup"])
 
 
 @app.get("/", response_class=ORJSONResponse)

@@ -48,18 +48,17 @@ STRATA-AI frontend is a React Single Page Application (SPA) built with modern to
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| React | 18.2+ | UI Framework |
+| React | 19.0+ | UI Framework |
 | TypeScript | 5.0+ | Type Safety |
 | Vite | 5.0+ | Build Tool |
 | Tailwind CSS | 3.4+ | Styling |
 | React Router | 6.0+ | Routing |
 | TanStack Query | 5.0+ | Server State |
-| Zustand | 4.0+ | Client State |
+| Zustand | 4.0+ | Client State (auth, UI tabs) |
 | React Hook Form | 7.0+ | Forms |
 | Zod | 3.0+ | Validation |
-| Chart.js | 4.0+ | Charts |
+| Chart.js | 4.0+ | Charts (Line, Bar, Doughnut) |
 | Framer Motion | 10.0+ | Animations |
-| Axios | 1.6+ | HTTP Client |
 | Lucide React | Latest | Icons |
 
 ## 3. Project Structure
@@ -85,17 +84,17 @@ src/
 │   │   ├── Spinner.tsx
 │   │   └── index.ts
 │   │
-│   ├── charts/              # Chart components
+│   ├── charts/              # Chart components (with empty states)
 │   │   ├── RunwayGauge.tsx
-│   │   ├── CashFlowChart.tsx
-│   │   ├── BurnRateChart.tsx
-│   │   ├── ScenarioCompare.tsx
+│   │   ├── CashFlowChart.tsx      # Line chart - Income/Expenses/Net
+│   │   ├── ExpenseBreakdown.tsx   # Doughnut chart - by category
+│   │   ├── RevenueComparison.tsx  # Bar chart - YoY comparison
 │   │   └── index.ts
 │   │
 │   ├── forms/               # Form components
-│   │   ├── FinancialEntryForm.tsx
-│   │   ├── ScenarioForm.tsx
-│   │   ├── StartupProfileForm.tsx
+│   │   ├── ScenarioForm.tsx       # Create what-if scenarios
+│   │   ├── IdeaForm.tsx           # AI ideation with context
+│   │   ├── RoadmapForm.tsx        # AI or manual roadmap creation
 │   │   └── index.ts
 │   │
 │   ├── layout/              # Layout components
@@ -106,11 +105,13 @@ src/
 │   │   └── AuthLayout.tsx
 │   │
 │   └── shared/              # Other shared components
-│       ├── AlertBanner.tsx
-│       ├── EmptyState.tsx
-│       ├── LoadingScreen.tsx
-│       ├── ErrorFallback.tsx
-│       └── ProtectedRoute.tsx
+│       ├── ModalController.tsx    # Controls modal rendering based on UI state
+│       ├── StatCard.tsx           # Dashboard stat cards
+│       ├── ScenarioCard.tsx       # Clickable scenario cards
+│       ├── IdeaCard.tsx           # AI idea cards with roadmap generation
+│       ├── RoadmapCard.tsx        # Roadmap summary cards
+│       ├── ProtectedRoute.tsx     # Auth-protected route wrapper
+│       └── index.ts
 │
 ├── pages/                   # Page components
 │   ├── auth/
@@ -169,10 +170,7 @@ src/
 │   │   └── index.ts
 │   │
 │   └── settings/
-│       ├── SettingsPage.tsx
-│       ├── ProfileSettings.tsx
-│       ├── AlertSettings.tsx
-│       └── index.ts
+│       └── SettingsPage.tsx       # 7 tabs: Profile, Startup, Alerts, Security, Import, LLM, Data
 │
 ├── hooks/                   # Custom hooks
 │   ├── useAuth.ts
@@ -196,8 +194,10 @@ src/
 │   └── settings.service.ts
 │
 ├── stores/                  # Zustand stores
-│   ├── authStore.ts
-│   └── uiStore.ts
+│   ├── auth.store.ts        # Authentication state (user, token, login/logout)
+│   ├── ui.store.ts          # UI state (modals, activeTab)
+│   ├── notification.store.ts # Notifications state (list, read/unread)
+│   └── search.store.ts      # Global search state (query, results)
 │
 ├── types/                   # TypeScript types
 │   ├── auth.types.ts
@@ -222,7 +222,225 @@ src/
     └── queryClient.ts       # React Query config
 ```
 
-## 4. Routing Structure
+## 4. Notifications System
+
+### Architecture
+
+```typescript
+// src/types/notification.types.ts
+export type NotificationType = 'warning' | 'info' | 'success' | 'error';
+
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  read: boolean;
+  createdAt: string;
+  link?: string;
+}
+```
+
+### Store (Zustand)
+
+```typescript
+// src/stores/notification.store.ts
+interface NotificationState {
+  notifications: Notification[];
+  setNotifications: (notifications: Notification[]) => void;
+  markAsRead: (id: string) => void;
+  markAllAsRead: () => void;
+  getUnreadCount: () => number;
+}
+```
+
+### Service
+
+```typescript
+// src/services/notification.service.ts
+- fetchNotifications(): Fetches from API or generates from dashboard data
+- generateNotificationsFromDashboard(): Creates alerts based on runway, burn rate
+- markNotificationAsRead(id): Marks single notification as read
+- markAllNotificationsAsRead(): Marks all as read
+- formatTimeAgo(date): Returns human-readable timestamps
+```
+
+### Dynamic Notifications Generated
+
+| Notification | Condition | Link |
+|--------------|-----------|------|
+| Runway Warning | runway < 6 months | `/` |
+| Critical Runway | runway < 3 months | `/scenarios` |
+| High Burn Rate | burn > $50k/month | `/` |
+| Positive Cash Flow | burn < 0 | `/` |
+| Welcome | No financial data | `/settings` |
+
+---
+
+## 5. Global Search
+
+### Architecture
+
+```typescript
+// src/types/search.types.ts
+export type SearchResultType = 'scenario' | 'idea' | 'roadmap' | 'report';
+
+export interface SearchResult {
+  id: string;
+  type: SearchResultType;
+  title: string;
+  description: string;
+  link: string;
+}
+```
+
+### Store (Zustand)
+
+```typescript
+// src/stores/search.store.ts
+interface SearchState {
+  query: string;
+  results: SearchResult[];
+  isOpen: boolean;
+  setQuery: (query: string) => void;
+  setResults: (results: SearchResult[]) => void;
+  clearSearch: () => void;
+}
+```
+
+### Service
+
+```typescript
+// src/services/search.service.ts
+- performSearch(query): Searches across scenarios, roadmaps, reports
+- debouncedSearch(query, callback, delay): Debounced version (300ms)
+```
+
+### Searchable Content
+
+| Type | Searches By |
+|------|-------------|
+| Scenarios | Name, type |
+| Roadmaps | Title, description |
+| Reports | Keywords (export, csv, monthly, etc.) |
+| Pages | Dashboard, settings, ideation, roadmap, scenario |
+
+---
+
+## 6. Modal System
+
+### ModalController Component
+
+```typescript
+// src/components/shared/ModalController.tsx
+// Renders modals based on UI store state
+
+switch (type) {
+  case 'createScenario': return <Modal><ScenarioForm /></Modal>;
+  case 'createIdea': return <Modal><IdeaForm /></Modal>;
+  case 'createRoadmap': return <Modal><RoadmapForm /></Modal>;
+}
+```
+
+### UI Store Modal State
+
+```typescript
+// src/stores/ui.store.ts
+type ModalType = 'createScenario' | 'createIdea' | 'createRoadmap';
+
+interface UiState {
+  type: ModalType | null;
+  isOpen: boolean;
+  openModal: (type: ModalType) => void;
+  closeModal: () => void;
+}
+```
+
+### Context-Specific Buttons
+
+| Page | Button | Opens |
+|------|--------|-------|
+| `/scenarios` | New Scenario | ScenarioForm |
+| `/ideation` | Generate Ideas | IdeaForm |
+| `/roadmaps` | New Roadmap | RoadmapForm |
+
+---
+
+## 7. Dashboard Tabs & Reports
+
+The dashboard uses a shared `activeTab` state from Zustand to switch between three views:
+
+### Tab Structure
+
+| Tab | Components | Features |
+|-----|------------|----------|
+| **Overview** | StatCard, CashFlowChart, ExpenseBreakdown, RevenueComparison | Key metrics, visualizations |
+| **Analytics** | StatCard, TrendAnalysis, KeyMetrics | Growth trends, CAC/LTV/MRR |
+| **Reports** | ReportCards with CSV generation | 6 downloadable report types |
+
+### Report Generation (CSV)
+
+```typescript
+// src/services/dashboard.service.ts
+export type ReportType = 
+  | 'monthly-summary' 
+  | 'cash-flow' 
+  | 'expense-breakdown' 
+  | 'runway-analysis' 
+  | 'revenue-analysis' 
+  | 'investor-update';
+
+export const generateReport = async (reportType: ReportType): Promise<void> => {
+  // Fetches data from API, converts to CSV, triggers download
+};
+```
+
+### Chart Empty States
+
+All chart components handle missing data gracefully:
+
+```typescript
+// Example: CashFlowChart.tsx
+const hasData = data && data.length > 0 && data.some(d => d.balance > 0);
+
+if (!hasData) {
+  return <EmptyState icon={TrendingUp} message="No cash flow data" />;
+}
+```
+
+---
+
+## 5. Settings Page Architecture
+
+The Settings page uses a tab-based layout with 7 sections:
+
+| Tab | State | Features |
+|-----|-------|----------|
+| My Profile | `fullName` | Update display name |
+| Startup Profile | `startupName`, `industry`, `stage`, `teamSize` | Edit company info |
+| Alert Thresholds | `warningThreshold`, `criticalThreshold`, `currency` | Configure alerts |
+| Security | `currentPassword`, `newPassword`, `confirmPassword` | Change password |
+| Import Data | `isImporting`, `importError`, `importSuccess`, `googleSheetUrl` | File uploads, Google Sheets |
+| LLM Provider | Read-only | View AI configuration |
+| Data & Account | - | Export data, delete account |
+
+### Data Import Flow
+
+```typescript
+// Supported file types
+const handleFileImport = async (file: File, fileTypeHint: string) => {
+  // fileTypeHint: 'pitch_deck' | 'financial_csv' | 'bank_statement' | 'stripe_csv'
+  // Calls: /api/v1/onboarding/extract-from-file-enhanced
+};
+
+const handleGoogleSheetConnect = async () => {
+  // Calls: /api/v1/onboarding/connect-google-sheets
+};
+```
+
+---
+
+## 6. Routing Structure
 
 ```typescript
 // src/config/routes.ts
@@ -232,17 +450,13 @@ export const routes = {
   login: '/login',
   register: '/register',
   forgotPassword: '/forgot-password',
+  resetPassword: '/reset-password',
   
   // Onboarding
   onboarding: '/onboarding',
   
   // Protected routes
   dashboard: '/',
-  
-  // Financials
-  financials: '/financials',
-  financialsEntry: '/financials/entry',
-  financialsImport: '/financials/import',
   
   // Scenarios
   scenarios: '/scenarios',
@@ -258,10 +472,8 @@ export const routes = {
   roadmaps: '/roadmaps',
   roadmapDetail: '/roadmaps/:id',
   
-  // Settings
+  // Settings (single page with tabs)
   settings: '/settings',
-  settingsProfile: '/settings/profile',
-  settingsAlerts: '/settings/alerts',
 };
 ```
 

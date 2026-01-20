@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getRoadmaps, getRoadmapById, generateRoadmapFromIdea } from '@/services/roadmap.service';
+import { getRoadmaps, getRoadmapById, generateRoadmapFromIdea, toggleTaskCompletion } from '@/services/roadmap.service';
 
 export const useRoadmaps = () => {
   return useQuery({
@@ -21,6 +21,18 @@ export const useGenerateRoadmap = () => {
     return useMutation({
         mutationFn: (ideaTitle: string) => generateRoadmapFromIdea(ideaTitle),
         onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['roadmaps'] });
+        }
+    });
+};
+
+export const useToggleTask = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ roadmapId, phaseId, taskId }: { roadmapId: string; phaseId: string; taskId: string }) => 
+            toggleTaskCompletion(roadmapId, phaseId, taskId),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['roadmaps', variables.roadmapId] });
             queryClient.invalidateQueries({ queryKey: ['roadmaps'] });
         }
     });

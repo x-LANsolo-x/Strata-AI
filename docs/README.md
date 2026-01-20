@@ -54,6 +54,101 @@ Complete documentation for the STRATA-AI startup survival and strategy assistant
 | FR-7 | Smart Execution Roadmaps | ✅ Implemented |
 | FR-8 | Visualization Dashboard | ✅ Implemented |
 | FR-9 | Hybrid LLM Provider System | ✅ Implemented |
+| FR-10 | Password Management (Change/Reset) | ✅ Implemented |
+| FR-11 | Data Import (Files, Google Sheets) | ✅ Implemented |
+| FR-12 | Dashboard Tabs (Overview/Analytics/Reports) | ✅ Implemented |
+| FR-13 | CSV Report Generation (6 types) | ✅ Implemented |
+| FR-14 | Settings Page (7 tabs) | ✅ Implemented |
+| FR-15 | Notifications System (Dynamic alerts) | ✅ Implemented |
+| FR-16 | Global Search (Scenarios, Roadmaps, Pages) | ✅ Implemented |
+| FR-17 | Scenario Detail Page | ✅ Implemented |
+| FR-18 | Modal System (Create Scenario/Idea/Roadmap) | ✅ Implemented |
+| FR-19 | Analytics Empty States | ✅ Implemented |
+
+---
+
+## 📊 New Features (Latest Updates)
+
+### 🔔 Notifications System
+
+Dynamic notifications based on financial data:
+- **Runway Warning**: Alert when runway < 6 months
+- **Critical Runway**: Alert when runway < 3 months
+- **High Burn Rate**: Alert when burn > $50k/month
+- **Positive Cash Flow**: Celebration when net positive
+- **Welcome**: Guidance for new users
+
+Features: Red dot indicator, mark as read, click to navigate, human-readable timestamps.
+
+### 🔍 Global Search
+
+Search across your entire workspace:
+- Search scenarios by name or type
+- Search roadmaps by title or description
+- Search reports by keywords
+- Quick navigation to pages (Dashboard, Settings, etc.)
+
+Features: Debounced search, results grouped by type, clear button, click-outside to close.
+
+### 📝 Scenario Management
+
+**Scenario Detail Page** (`/scenarios/:id`):
+- Header with scenario name, type icon, runway impact badge
+- Metrics grid: New Runway, Runway Impact, New Burn Rate, Created Date
+- Modifications details: expense/revenue changes, one-time cash impact
+
+**Clickable Scenario Cards**: Navigate to detail page on click.
+
+### 💡 Modal System
+
+Context-aware modals for creating content:
+| Page | Button | Modal |
+|------|--------|-------|
+| `/scenarios` | New Scenario | Create scenario with financial modifications |
+| `/ideation` | Generate Ideas | AI ideation with context input |
+| `/roadmaps` | New Roadmap | AI-generated or manual roadmap creation |
+
+### Dashboard Enhancements
+
+The dashboard now includes three tabs accessible from the header:
+
+| Tab | Content |
+|-----|---------|
+| **Overview** | Stats cards, Cash Flow chart, Expense Breakdown donut chart, Revenue Comparison bar chart |
+| **Analytics** | Trend Analysis card, Key Metrics (with empty states when no data) |
+| **Reports** | 6 downloadable CSV reports with one-click generation |
+
+### Settings Page
+
+Complete settings management with 7 tabs:
+
+| Tab | Features |
+|-----|----------|
+| My Profile | Update display name |
+| Startup Profile | Company name, industry, stage, team size |
+| Alert Thresholds | Runway warning/critical levels, currency |
+| Security | Change password (requires current password) |
+| Import Data | Upload Pitch Deck, Spreadsheets, Bank Statements, Stripe exports, Google Sheets |
+| LLM Provider | View AI provider configuration |
+| Data & Account | Export all data (JSON), Delete account |
+
+### CSV Report Generation
+
+Generate and download detailed financial reports:
+
+1. **Monthly Summary** - Period overview with revenue, expenses, cash flow
+2. **Cash Flow Statement** - Monthly inflows/outflows with running balance
+3. **Expense Breakdown** - Categorized expenses with percentages
+4. **Runway Analysis** - Current status + projection scenarios (10%, 20% burn reduction)
+5. **Revenue Analysis** - Revenue streams breakdown with recurring ratio
+6. **Investor Update** - Executive summary with key metrics
+
+### Empty States
+
+All components show helpful empty states when no data is connected:
+- **Charts**: "No cash flow data", "No expense data", "No revenue data"
+- **Analytics**: "No trend data available", "No metrics available"
+- **Notifications**: "No notifications" with bell icon
 
 ---
 
@@ -136,4 +231,4 @@ React 19 + TypeScript
 
 ## 📅 Last Updated
 
-**2026-01-20**
+**2026-01-20** - Added Notifications System, Global Search, Scenario Detail Page, Modal System (Scenario/Idea/Roadmap creation), Analytics Empty States, and updated all documentation.

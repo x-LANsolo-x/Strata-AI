@@ -10,6 +10,7 @@ import {
 } from 'chart.js';
 import type { TooltipItem } from 'chart.js';
 import type { RevenueComparison as RevenueComparisonData } from '@/types/dashboard.types';
+import { BarChart3 } from 'lucide-react';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -19,33 +20,20 @@ interface RevenueComparisonProps {
   previousYearLabel?: string;
 }
 
-// Default data if none provided
-const defaultData: RevenueComparisonData[] = [
-  { month: 'Jan', currentYear: 280000, previousYear: 220000 },
-  { month: 'Feb', currentYear: 320000, previousYear: 280000 },
-  { month: 'Mar', currentYear: 350000, previousYear: 300000 },
-  { month: 'Apr', currentYear: 380000, previousYear: 320000 },
-  { month: 'May', currentYear: 420000, previousYear: 350000 },
-  { month: 'Jun', currentYear: 385000, previousYear: 325000 },
-  { month: 'Jul', currentYear: 450000, previousYear: 380000 },
-  { month: 'Aug', currentYear: 480000, previousYear: 400000 },
-  { month: 'Sep', currentYear: 420000, previousYear: 360000 },
-  { month: 'Oct', currentYear: 390000, previousYear: 340000 },
-  { month: 'Nov', currentYear: 360000, previousYear: 320000 },
-  { month: 'Dec', currentYear: 400000, previousYear: 350000 },
-];
-
 export function RevenueComparison({ 
-  data = defaultData, 
+  data, 
   currentYearLabel = '2026',
   previousYearLabel = '2025'
 }: RevenueComparisonProps) {
+  // Check if we have valid data
+  const hasData = data && data.length > 0 && data.some(item => item.currentYear > 0 || item.previousYear > 0);
+  
   const chartData = {
-    labels: data.map(d => d.month),
+    labels: hasData ? data!.map(d => d.month) : [],
     datasets: [
       {
         label: currentYearLabel,
-        data: data.map(d => d.currentYear),
+        data: hasData ? data!.map(d => d.currentYear) : [],
         backgroundColor: '#1B8A6B',
         borderRadius: 4,
         borderSkipped: false,
@@ -54,7 +42,7 @@ export function RevenueComparison({
       },
       {
         label: previousYearLabel,
-        data: data.map(d => d.previousYear),
+        data: hasData ? data!.map(d => d.previousYear) : [],
         backgroundColor: '#d1fae5',
         borderRadius: 4,
         borderSkipped: false,
@@ -134,23 +122,36 @@ export function RevenueComparison({
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900">Revenue Comparison</h3>
         
-        {/* Custom Legend */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-primary-500" />
-            <span className="text-sm text-gray-600">{currentYearLabel}</span>
+        {hasData && (
+          /* Custom Legend */
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-primary-500" />
+              <span className="text-sm text-gray-600">{currentYearLabel}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-primary-100" />
+              <span className="text-sm text-gray-600">{previousYearLabel}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-primary-100" />
-            <span className="text-sm text-gray-600">{previousYearLabel}</span>
-          </div>
-        </div>
+        )}
       </div>
 
-      {/* Chart */}
-      <div className="h-64">
-        <Bar options={options} data={chartData} />
-      </div>
+      {!hasData ? (
+        /* Empty State */
+        <div className="flex flex-col items-center justify-center h-64 text-center">
+          <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+            <BarChart3 className="h-6 w-6 text-gray-400" />
+          </div>
+          <p className="text-sm font-medium text-gray-500">No revenue data</p>
+          <p className="text-xs text-gray-400 mt-1">Import financial data to see comparison</p>
+        </div>
+      ) : (
+        /* Chart */
+        <div className="h-64">
+          <Bar options={options} data={chartData} />
+        </div>
+      )}
     </div>
   );
 }
