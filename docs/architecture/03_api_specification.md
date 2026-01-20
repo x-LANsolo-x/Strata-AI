@@ -1081,12 +1081,137 @@ Delete user account and all data.
 
 ---
 
-## 5. Rate Limiting
+## 5. LLM Management API
+
+Endpoints for configuring AI providers directly from the UI.
+
+### 5.1 Get LLM Configuration
+
+#### GET /llm/config
+
+Get current LLM configuration and available providers.
+
+**Response (200):**
+```json
+{
+  "provider": "groq",
+  "model": "llama-3.3-70b-versatile",
+  "is_connected": true,
+  "api_key_set": true,
+  "available_providers": [
+    {
+      "id": "groq",
+      "name": "Groq",
+      "description": "Ultra-fast inference with Llama models",
+      "models": ["llama-3.3-70b-versatile", "llama-3.1-70b-versatile", "mixtral-8x7b-32768"],
+      "requires_api_key": true,
+      "api_key_env_var": "GROQ_API_KEY",
+      "is_configured": true
+    },
+    {
+      "id": "openai",
+      "name": "OpenAI",
+      "description": "GPT-4 and GPT-3.5 models",
+      "models": ["gpt-4-turbo-preview", "gpt-4", "gpt-3.5-turbo"],
+      "requires_api_key": true,
+      "api_key_env_var": "OPENAI_API_KEY",
+      "is_configured": false
+    }
+  ]
+}
+```
+
+### 5.2 Update LLM Configuration
+
+#### PUT /llm/config
+
+Update provider, model, or API key.
+
+**Request:**
+```json
+{
+  "provider": "openai",
+  "model": "gpt-4-turbo-preview",
+  "api_key": "sk-..." 
+}
+```
+
+**Response (200):** Updated LLMConfig object
+
+### 5.3 Test LLM Connection
+
+#### POST /llm/test
+
+Test LLM connection with a simple prompt.
+
+**Request:**
+```json
+{
+  "provider": "groq",
+  "model": "llama-3.3-70b-versatile",
+  "api_key": null,
+  "prompt": "Say 'Hello, STRATA-AI is connected!'"
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Successfully connected to groq using llama-3.3-70b-versatile",
+  "response": "Hello, STRATA-AI is connected!",
+  "latency_ms": 245
+}
+```
+
+**Response (Error):**
+```json
+{
+  "success": false,
+  "message": "No API key configured for openai. Please add your API key.",
+  "response": null,
+  "latency_ms": null
+}
+```
+
+### 5.4 Get Available Providers
+
+#### GET /llm/providers
+
+Get list of all available LLM providers and their models.
+
+**Response (200):** Array of LLMProvider objects
+
+### 5.5 Delete API Key
+
+#### DELETE /llm/api-key/{provider}
+
+Delete stored API key for a provider.
+
+**Response (200):**
+```json
+{
+  "message": "API key for openai deleted successfully"
+}
+```
+
+### Default Provider Configuration
+
+Groq is pre-configured with the system API key. The `get_effective_api_key` function determines which key to use:
+
+1. **User's custom API key** (highest priority)
+2. **System Groq API key** (from environment, for Groq only)
+3. **Environment variable fallback**
+
+---
+
+## 6. Rate Limiting
 
 | Endpoint Category | Limit | Window |
 |-------------------|-------|--------|
 | Authentication | 10 requests | 1 minute |
 | AI Endpoints | 20 requests | 1 minute |
+| LLM Management | 30 requests | 1 minute |
 | General API | 100 requests | 1 minute |
 
 **Rate Limit Headers:**

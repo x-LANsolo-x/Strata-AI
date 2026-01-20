@@ -191,6 +191,7 @@ src/
 │   ├── scenario.service.ts
 │   ├── ai.service.ts
 │   ├── roadmap.service.ts
+│   ├── llm.service.ts       # LLM configuration management
 │   └── settings.service.ts
 │
 ├── stores/                  # Zustand stores
@@ -206,6 +207,7 @@ src/
 │   ├── scenario.types.ts
 │   ├── idea.types.ts
 │   ├── roadmap.types.ts
+│   ├── llm.types.ts         # LLM configuration types
 │   └── api.types.ts
 │
 ├── utils/                   # Utility functions
@@ -366,7 +368,76 @@ interface UiState {
 
 ---
 
-## 7. Dashboard Tabs & Reports
+## 7. LLM Management Dashboard
+
+The LLM Provider tab in Settings allows users to configure their AI provider without code changes.
+
+### Architecture
+
+```typescript
+// src/types/llm.types.ts
+export interface LLMProvider {
+  id: string;           // 'groq' | 'openai' | 'gemini' | 'ollama'
+  name: string;
+  description: string;
+  models: string[];
+  requires_api_key: boolean;
+  is_configured: boolean;
+}
+
+export interface LLMConfig {
+  provider: string;
+  model: string;
+  is_connected: boolean;
+  api_key_set: boolean;
+  available_providers: LLMProvider[];
+}
+```
+
+### Service
+
+```typescript
+// src/services/llm.service.ts
+export const getLLMConfig = async (): Promise<LLMConfig>;
+export const updateLLMConfig = async (config: UpdateLLMConfig): Promise<LLMConfig>;
+export const testLLMConnection = async (request?: TestLLMRequest): Promise<TestLLMResponse>;
+export const deleteAPIKey = async (provider: string): Promise<{ message: string }>;
+```
+
+### Default Configuration
+
+Groq is pre-configured with the system API key. Users can use AI features immediately:
+
+| Provider | Pre-configured | User Action |
+|----------|---------------|-------------|
+| **Groq** | ✅ System API key | Ready to use |
+| **OpenAI** | ❌ | User adds their key |
+| **Gemini** | ❌ | User adds their key |
+| **Ollama** | ✅ No key needed | Local installation |
+
+### UI Components
+
+The LLM tab includes:
+- **Connection Status**: Green (connected) / Yellow (not connected)
+- **Provider Cards**: Clickable cards with model info and status badges
+- **Model Dropdown**: Select from available models per provider
+- **API Key Input**: Secure input with show/hide toggle
+- **Test Connection**: Button with response preview and latency
+- **Save/Reset**: Apply or revert configuration changes
+
+### API Priority for Groq
+
+```typescript
+// Backend: get_effective_api_key()
+// Priority order:
+1. User's custom API key (if provided)
+2. System Groq API key (from .env)
+3. Environment variable fallback
+```
+
+---
+
+## 8. Dashboard Tabs & Reports
 
 The dashboard uses a shared `activeTab` state from Zustand to switch between three views:
 

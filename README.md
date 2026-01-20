@@ -52,7 +52,8 @@
 | **🔔 Notifications System** | Dynamic notifications based on financial data (runway alerts, etc.) | ✅ |
 | **🔍 Global Search** | Search across scenarios, roadmaps, reports, and pages | ✅ |
 | **📝 Scenario Details** | View detailed scenario information with impact metrics | ✅ |
-| **🤖 Hybrid LLM Provider** | Groq (default), OpenAI, Gemini, Ollama support | ✅ |
+| **🤖 LLM Management Dashboard** | Configure AI providers, models, and API keys from the UI | ✅ |
+| **⚡ Groq Default Provider** | Pre-configured Groq with system API key (no setup needed) | ✅ |
 
 ---
 
@@ -197,8 +198,55 @@ Context-aware modals for creating content:
 | **Alert Thresholds** | Configure runway warning/critical thresholds, currency |
 | **Security** | Change password with current password verification |
 | **Import Data** | Upload files (Pitch Deck, Spreadsheet, Bank Statement, Stripe), Connect Google Sheets |
-| **LLM Provider** | View current AI provider configuration |
+| **LLM Provider** | Full LLM management dashboard (see below) |
 | **Data & Account** | Export all data, delete account |
+
+---
+
+## 🤖 LLM Management Dashboard
+
+Manage your AI provider configuration directly from the Settings page - no code changes required.
+
+### Default Configuration
+
+STRATA-AI comes **pre-configured with Groq** using the system API key. Users can start using AI features immediately without any setup.
+
+### Supported Providers
+
+| Provider | Models | API Key Required | Description |
+|----------|--------|------------------|-------------|
+| **Groq** (Default) | llama-3.3-70b-versatile, llama-3.1-70b, mixtral-8x7b, gemma2-9b | ✅ (Pre-configured) | Ultra-fast inference, best for speed |
+| **OpenAI** | GPT-4-turbo, GPT-4, GPT-3.5-turbo | ✅ (User provides) | Industry-leading quality |
+| **Google Gemini** | gemini-pro, gemini-1.5-pro, gemini-1.5-flash | ✅ (User provides) | Strong reasoning capabilities |
+| **Ollama** | llama3, mistral, mixtral, codellama, phi3 | ❌ | Local inference, privacy-focused |
+
+### Dashboard Features
+
+| Feature | Description |
+|---------|-------------|
+| **Connection Status** | Green/Yellow indicator showing if LLM is connected |
+| **Provider Selection** | Click to switch between Groq, OpenAI, Gemini, or Ollama |
+| **Model Selection** | Dropdown to choose from available models per provider |
+| **API Key Management** | Securely add, update, or delete API keys |
+| **Test Connection** | One-click test with response preview and latency |
+| **Save/Reset** | Apply or revert configuration changes |
+
+### LLM API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/llm/config` | GET | Get current LLM configuration |
+| `/api/v1/llm/config` | PUT | Update provider, model, or API key |
+| `/api/v1/llm/test` | POST | Test LLM connection |
+| `/api/v1/llm/providers` | GET | Get all available providers |
+| `/api/v1/llm/api-key/{provider}` | DELETE | Delete stored API key |
+
+### How It Works
+
+1. **New Users**: Groq is pre-configured and connected using system API key
+2. **Test Connection**: Works immediately with Groq - no setup required
+3. **Switch Providers**: Select a different provider and add your API key
+4. **Custom Groq Key**: Optionally override system key with your own
 
 ---
 

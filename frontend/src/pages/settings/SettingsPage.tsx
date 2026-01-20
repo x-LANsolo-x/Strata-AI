@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { User, Building2, Bell, AlertTriangle, Download, Trash2, Loader2, CheckCircle, Cpu, Lock, Eye, EyeOff, Upload, FileSpreadsheet, FileText, Landmark, CreditCard, Table, Link as LinkIcon } from 'lucide-react';
+import { User, Building2, Bell, AlertTriangle, Download, Trash2, Loader2, CheckCircle, Cpu, Lock, Eye, EyeOff, Upload, FileSpreadsheet, FileText, Landmark, CreditCard, Table, Link as LinkIcon, Zap, Settings2, Play, Check, X, ChevronDown } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { Button } from '@/components/ui/Button';
 import { getSettings, updateSettings, getStartupProfile, updateStartupProfile, exportAllData, deleteAccount } from '@/services/startup.service';
+import { getLLMConfig, updateLLMConfig, testLLMConnection, deleteAPIKey } from '@/services/llm.service';
 import { apiClient } from '@/services/api.client';
 import type { UserSettings, UpdateSettingsInput, StartupProfile, UpdateStartupInput } from '@/types/startup.types';
+import type { LLMConfig, LLMProvider } from '@/types/llm.types';
 
 type SettingsTab = 'profile' | 'startup' | 'alerts' | 'security' | 'import' | 'data' | 'llm';
 
@@ -61,6 +63,36 @@ export function SettingsPage() {
   const [importError, setImportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
   const [googleSheetUrl, setGoogleSheetUrl] = useState('');
+
+  // LLM state
+  const [llmConfig, setLlmConfig] = useState<LLMConfig | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<string>('');
+  const [selectedModel, setSelectedModel] = useState<string>('');
+  const [apiKeyInput, setApiKeyInput] = useState<string>('');
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [isTestingLLM, setIsTestingLLM] = useState(false);
+  const [llmTestResult, setLlmTestResult] = useState<{ success: boolean; message: string; response?: string; latency_ms?: number } | null>(null);
+  const [isSavingLLM, setIsSavingLLM] = useState(false);
+  const [llmError, setLlmError] = useState<string | null>(null);
+  const [llmSuccess, setLlmSuccess] = useState<string | null>(null);
+
+  // Fetch LLM config
+  useEffect(() => {
+    if (activeTab === 'llm') {
+      fetchLLMConfig();
+    }
+  }, [activeTab]);
+
+  const fetchLLMConfig = async () => {
+    try {
+      const config = await getLLMConfig();
+      setLlmConfig(config);
+      setSelectedProvider(config.provider);
+      setSelectedModel(config.model);
+    } catch (error) {
+      console.error('Failed to fetch LLM config:', error);
+    }
+  };
 
   // Initialize form values when data loads
   useEffect(() => {
@@ -329,6 +361,88 @@ export function SettingsPage() {
     } finally {
       setIsImporting(false);
     }
+  };
+
+  // Handle LLM provider change
+  const handleProviderChange = (providerId: string) => {
+    setSelectedProvider(providerId);
+    setApiKeyInput('');
+    setLlmTestResult(null);
+    setLlmError(null);
+    setLlmSuccess(null);
+    
+    // Set default model for the provider
+    const provider = llmConfig?.available_providers.find(p => p.id === providerId);
+    if (provider && provider.models.length > 0) {
+      setSelectedModel(provider.models[0]);
+    }
+  };
+
+  // Handle save LLM config
+  const handleSaveLLMConfig = async () => {
+    setIsSavingLLM(true);
+    setLlmError(null);
+    setLlmSuccess(null);
+    
+    try {
+      const updatedConfig = await updateLLMConfig({
+        provider: selectedProvider,
+        model: selectedModel,
+        api_key: apiKeyInput || undefined,
+      });
+      setLlmConfig(updatedConfig);
+      setApiKeyInput('');
+      setLlmSuccess('LLM configuration saved successfully!');
+      showSaveMessage('LLM configuration updated');
+      setTimeout(() => setLlmSuccess(null), 3000);
+    } catch (error) {
+      setLlmError(error instanceof Error ? error.message : 'Failed to save LLM configuration');
+    } finally {
+      setIsSavingLLM(false);
+    }
+  };
+
+  // Handle test LLM connection
+  const handleTestLLM = async () => {
+    setIsTestingLLM(true);
+    setLlmTestResult(null);
+    setLlmError(null);
+    
+    try {
+      const result = await testLLMConnection({
+        provider: selectedProvider,
+        model: selectedModel,
+        api_key: apiKeyInput || undefined,
+      });
+      setLlmTestResult(result);
+    } catch (error) {
+      setLlmTestResult({
+        success: false,
+        message: error instanceof Error ? error.message : 'Connection test failed',
+      });
+    } finally {
+      setIsTestingLLM(false);
+    }
+  };
+
+  // Handle delete API key
+  const handleDeleteApiKey = async (providerId: string) => {
+    if (!window.confirm(`Are you sure you want to delete the API key for ${providerId}?`)) {
+      return;
+    }
+    
+    try {
+      await deleteAPIKey(providerId);
+      await fetchLLMConfig();
+      showSaveMessage('API key deleted');
+    } catch (error) {
+      setLlmError(error instanceof Error ? error.message : 'Failed to delete API key');
+    }
+  };
+
+  // Get current provider info
+  const getCurrentProvider = (): LLMProvider | undefined => {
+    return llmConfig?.available_providers.find(p => p.id === selectedProvider);
   };
 
   const inputClasses = "block w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 focus:outline-none";
@@ -783,36 +897,273 @@ export function SettingsPage() {
           <div className="space-y-6">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-1">LLM Provider Configuration</h3>
-              <p className="text-sm text-gray-500">View current AI provider settings</p>
-            </div>
-            
-            <div className="bg-primary-50 border border-primary-100 rounded-xl p-4">
-              <div className="flex items-start gap-3">
-                <Cpu className="h-5 w-5 text-primary-500 mt-0.5" />
-                <div>
-                  <h4 className="font-medium text-gray-900">Current Provider: {settings?.llm_provider || 'Groq'}</h4>
-                  <p className="text-sm text-gray-600 mt-1">Model: {settings?.llm_model || 'llama-3.3-70b-versatile'}</p>
-                </div>
-              </div>
+              <p className="text-sm text-gray-500">Configure your AI provider and model settings</p>
             </div>
 
-            <div className="bg-gray-50 rounded-xl p-4">
-              <h4 className="font-medium text-gray-900 mb-2">To change LLM provider:</h4>
-              <ol className="text-sm text-gray-600 space-y-2 list-decimal list-inside">
-                <li>Fork the STRATA-AI repository</li>
-                <li>Edit the <code className="bg-gray-200 px-1 rounded">.env</code> file</li>
-                <li>Set <code className="bg-gray-200 px-1 rounded">LLM_PROVIDER</code> and <code className="bg-gray-200 px-1 rounded">GROQ_API_KEY</code></li>
-                <li>Supported providers: Groq, OpenAI, Gemini, Ollama</li>
-              </ol>
-              <a 
-                href="https://github.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-block mt-3 text-primary-500 hover:text-primary-600 text-sm font-medium"
-              >
-                View documentation →
-              </a>
-            </div>
+            {/* Success/Error Messages */}
+            {llmSuccess && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+                <CheckCircle className="h-4 w-4" />
+                {llmSuccess}
+              </div>
+            )}
+            {llmError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+                {llmError}
+              </div>
+            )}
+
+            {!llmConfig ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+              </div>
+            ) : (
+              <>
+                {/* Current Configuration Status */}
+                <div className={`p-6 rounded-2xl border ${llmConfig.is_connected ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${llmConfig.is_connected ? 'bg-green-500' : 'bg-yellow-500'} text-white`}>
+                        <Zap className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className={`text-sm font-medium ${llmConfig.is_connected ? 'text-green-600' : 'text-yellow-600'}`}>
+                          {llmConfig.is_connected ? 'Connected' : 'Not Connected'}
+                        </p>
+                        <p className={`text-xl font-bold ${llmConfig.is_connected ? 'text-green-900' : 'text-yellow-900'}`}>
+                          {llmConfig.available_providers.find(p => p.id === llmConfig.provider)?.name || llmConfig.provider}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={`text-xs ${llmConfig.is_connected ? 'text-green-600' : 'text-yellow-600'}`}>Current Model</p>
+                      <p className={`text-sm font-medium ${llmConfig.is_connected ? 'text-green-900' : 'text-yellow-900'}`}>{llmConfig.model}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Provider Selection */}
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Select Provider</h4>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {llmConfig.available_providers.map((provider) => (
+                      <button
+                        key={provider.id}
+                        onClick={() => handleProviderChange(provider.id)}
+                        className={`p-4 rounded-xl border-2 text-left transition-all ${
+                          selectedProvider === provider.id 
+                            ? 'border-primary-500 bg-primary-50' 
+                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                              provider.id === 'groq' ? 'bg-orange-100' :
+                              provider.id === 'openai' ? 'bg-green-100' :
+                              provider.id === 'gemini' ? 'bg-blue-100' :
+                              'bg-purple-100'
+                            }`}>
+                              <Cpu className={`h-4 w-4 ${
+                                provider.id === 'groq' ? 'text-orange-600' :
+                                provider.id === 'openai' ? 'text-green-600' :
+                                provider.id === 'gemini' ? 'text-blue-600' :
+                                'text-purple-600'
+                              }`} />
+                            </div>
+                            <span className="font-medium text-gray-900">{provider.name}</span>
+                          </div>
+                          {provider.is_configured && (
+                            <Check className="h-4 w-4 text-green-500" />
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 line-clamp-2">{provider.description}</p>
+                        <div className="mt-2 flex items-center gap-2">
+                          {provider.requires_api_key ? (
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              provider.is_configured 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-yellow-100 text-yellow-700'
+                            }`}>
+                              {provider.is_configured ? 'API Key Set' : 'API Key Required'}
+                            </span>
+                          ) : (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                              No API Key Needed
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Model Selection */}
+                {getCurrentProvider() && (
+                  <div>
+                    <label className={labelClasses}>Select Model</label>
+                    <div className="relative">
+                      <select
+                        value={selectedModel}
+                        onChange={(e) => setSelectedModel(e.target.value)}
+                        className={inputClasses + " appearance-none pr-10"}
+                      >
+                        {getCurrentProvider()?.models.map((model) => (
+                          <option key={model} value={model}>{model}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {getCurrentProvider()?.models.length} models available for {getCurrentProvider()?.name}
+                    </p>
+                  </div>
+                )}
+
+                {/* API Key Input */}
+                {getCurrentProvider()?.requires_api_key && (
+                  <div>
+                    <label className={labelClasses}>
+                      API Key {getCurrentProvider()?.is_configured && <span className="text-green-600">(Already configured)</span>}
+                    </label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <input
+                          type={showApiKey ? 'text' : 'password'}
+                          value={apiKeyInput}
+                          onChange={(e) => setApiKeyInput(e.target.value)}
+                          placeholder={getCurrentProvider()?.is_configured ? '••••••••••••••••' : `Enter your ${getCurrentProvider()?.name} API key`}
+                          className={inputClasses}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowApiKey(!showApiKey)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                          {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      {getCurrentProvider()?.is_configured && (
+                        <Button
+                          variant="outline"
+                          onClick={() => handleDeleteApiKey(selectedProvider)}
+                          className="text-red-600 border-red-200 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Get your API key from {getCurrentProvider()?.name}'s dashboard. Keys are stored securely.
+                    </p>
+                  </div>
+                )}
+
+                {/* Test Connection */}
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-900">Test Connection</h4>
+                      <p className="text-xs text-gray-500">Verify your LLM configuration works correctly</p>
+                    </div>
+                    <Button
+                      onClick={handleTestLLM}
+                      disabled={isTestingLLM || (getCurrentProvider()?.requires_api_key && !getCurrentProvider()?.is_configured && !apiKeyInput)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {isTestingLLM ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Testing...
+                        </>
+                      ) : (
+                        <>
+                          <Play className="h-4 w-4 mr-2" />
+                          Test Connection
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Test Result */}
+                  {llmTestResult && (
+                    <div className={`mt-3 p-3 rounded-lg ${llmTestResult.success ? 'bg-green-100' : 'bg-red-100'}`}>
+                      <div className="flex items-start gap-2">
+                        {llmTestResult.success ? (
+                          <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                        ) : (
+                          <X className="h-5 w-5 text-red-600 mt-0.5" />
+                        )}
+                        <div className="flex-1">
+                          <p className={`text-sm font-medium ${llmTestResult.success ? 'text-green-700' : 'text-red-700'}`}>
+                            {llmTestResult.message}
+                          </p>
+                          {llmTestResult.response && (
+                            <p className="text-xs text-green-600 mt-1 bg-green-50 p-2 rounded">
+                              Response: "{llmTestResult.response}"
+                            </p>
+                          )}
+                          {llmTestResult.latency_ms && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Latency: {llmTestResult.latency_ms}ms
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Save Button */}
+                <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                  <Button
+                    onClick={() => {
+                      setSelectedProvider(llmConfig.provider);
+                      setSelectedModel(llmConfig.model);
+                      setApiKeyInput('');
+                      setLlmTestResult(null);
+                    }}
+                    variant="outline"
+                    disabled={isSavingLLM}
+                  >
+                    Reset
+                  </Button>
+                  <Button
+                    onClick={handleSaveLLMConfig}
+                    disabled={isSavingLLM}
+                  >
+                    {isSavingLLM ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Settings2 className="h-4 w-4 mr-2" />
+                        Save Configuration
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Info Note */}
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                  <div className="flex items-start gap-3">
+                    <Cpu className="h-5 w-5 text-blue-500 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium text-gray-900">Provider Tips</h4>
+                      <ul className="text-sm text-gray-600 mt-1 space-y-1">
+                        <li>• <strong>Groq:</strong> Best for speed. Free tier available with generous limits.</li>
+                        <li>• <strong>OpenAI:</strong> GPT-4 for highest quality. Requires paid API access.</li>
+                        <li>• <strong>Gemini:</strong> Great for multi-modal tasks. Free tier available.</li>
+                        <li>• <strong>Ollama:</strong> Run locally for privacy. Requires local installation.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 

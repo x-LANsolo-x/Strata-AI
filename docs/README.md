@@ -64,6 +64,8 @@ Complete documentation for the STRATA-AI startup survival and strategy assistant
 | FR-17 | Scenario Detail Page | ✅ Implemented |
 | FR-18 | Modal System (Create Scenario/Idea/Roadmap) | ✅ Implemented |
 | FR-19 | Analytics Empty States | ✅ Implemented |
+| FR-20 | LLM Management Dashboard | ✅ Implemented |
+| FR-21 | Groq Default Provider (Pre-configured) | ✅ Implemented |
 
 ---
 
@@ -107,6 +109,42 @@ Context-aware modals for creating content:
 | `/scenarios` | New Scenario | Create scenario with financial modifications |
 | `/ideation` | Generate Ideas | AI ideation with context input |
 | `/roadmaps` | New Roadmap | AI-generated or manual roadmap creation |
+
+### 🤖 LLM Management Dashboard
+
+Full LLM provider management from Settings page:
+
+**Supported Providers:**
+| Provider | Pre-configured | Description |
+|----------|---------------|-------------|
+| **Groq** | ✅ Yes (Default) | Ultra-fast inference with Llama 3.3 |
+| **OpenAI** | ❌ User adds key | GPT-4, GPT-3.5 |
+| **Google Gemini** | ❌ User adds key | Gemini Pro, 1.5 |
+| **Ollama** | ✅ No key needed | Local inference |
+
+**Dashboard Features:**
+- Connection status indicator (Green/Yellow)
+- Provider selection cards with model info
+- Model dropdown per provider
+- API key input with show/hide toggle
+- Test connection button with response preview
+- Latency display after testing
+- Save/Reset configuration buttons
+
+**API Endpoints:**
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/llm/config` | GET | Get current config |
+| `/api/v1/llm/config` | PUT | Update provider/model/key |
+| `/api/v1/llm/test` | POST | Test connection |
+| `/api/v1/llm/providers` | GET | List all providers |
+| `/api/v1/llm/api-key/{provider}` | DELETE | Delete API key |
+
+**Key Behavior:**
+1. Groq is pre-configured with system API key
+2. Users can use AI features immediately (no setup)
+3. Users can switch to other providers by adding their own API keys
+4. User's custom API keys take priority over system keys
 
 ### Dashboard Enhancements
 
@@ -231,4 +269,4 @@ React 19 + TypeScript
 
 ## 📅 Last Updated
 
-**2026-01-20** - Added Notifications System, Global Search, Scenario Detail Page, Modal System (Scenario/Idea/Roadmap creation), Analytics Empty States, and updated all documentation.
+**2026-01-20** - Added LLM Management Dashboard with Groq as default provider, Notifications System, Global Search, Scenario Detail Page, Modal System, Analytics Empty States, and updated all documentation.
