@@ -1,31 +1,68 @@
+import { lazy, Suspense } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
-// Layouts
+// Layouts - Load immediately (needed for all routes)
 import { MainLayout } from '@/components/layout/MainLayout';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 
-// Wrappers & Error
+// Wrappers & Error - Load immediately
 import { ProtectedRoute } from '@/components/shared/ProtectedRoute';
 import { ErrorPage } from '@/pages/ErrorPage';
 
-// Pages
-import { LoginPage } from '@/pages/auth/LoginPage';
-import { RegisterPage } from '@/pages/auth/RegisterPage';
-import { SmartOnboarding } from '@/pages/onboarding/SmartOnboarding';
-import { DashboardPage } from '@/pages/dashboard/DashboardPage';
-import { ScenariosPage } from '@/pages/scenarios/ScenariosPage';
-import { IdeationPage } from '@/pages/ideation/IdeationPage';
-import { RoadmapsPage } from '@/pages/roadmaps/RoadmapsPage';
-import { RoadmapDetailPage } from '@/pages/roadmaps/RoadmapDetailPage';
-import { SettingsPage } from '@/pages/settings/SettingsPage';
+// Loading component for lazy-loaded pages
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen bg-gray-50">
+    <div className="flex flex-col items-center gap-4">
+      <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      <p className="text-gray-600 font-medium">Loading...</p>
+    </div>
+  </div>
+);
+
+// Lazy load pages for code splitting
+// This reduces initial bundle size and loads pages on-demand
+const LoginPage = lazy(() => 
+  import('@/pages/auth/LoginPage').then(m => ({ default: m.LoginPage }))
+);
+const RegisterPage = lazy(() => 
+  import('@/pages/auth/RegisterPage').then(m => ({ default: m.RegisterPage }))
+);
+const SmartOnboarding = lazy(() => 
+  import('@/pages/onboarding/SmartOnboarding').then(m => ({ default: m.SmartOnboarding }))
+);
+const DashboardPage = lazy(() => 
+  import('@/pages/dashboard/DashboardPage').then(m => ({ default: m.DashboardPage }))
+);
+const ScenariosPage = lazy(() => 
+  import('@/pages/scenarios/ScenariosPage').then(m => ({ default: m.ScenariosPage }))
+);
+const IdeationPage = lazy(() => 
+  import('@/pages/ideation/IdeationPage').then(m => ({ default: m.IdeationPage }))
+);
+const RoadmapsPage = lazy(() => 
+  import('@/pages/roadmaps/RoadmapsPage').then(m => ({ default: m.RoadmapsPage }))
+);
+const RoadmapDetailPage = lazy(() => 
+  import('@/pages/roadmaps/RoadmapDetailPage').then(m => ({ default: m.RoadmapDetailPage }))
+);
+const SettingsPage = lazy(() => 
+  import('@/pages/settings/SettingsPage').then(m => ({ default: m.SettingsPage }))
+);
+
+// Wrap lazy components with Suspense
+const withSuspense = (Component: React.LazyExoticComponent<React.ComponentType>) => (
+  <Suspense fallback={<PageLoader />}>
+    <Component />
+  </Suspense>
+);
 
 const router = createBrowserRouter([
   {
     element: <AuthLayout />,
     errorElement: <ErrorPage />,
     children: [
-      { path: '/login', element: <LoginPage /> },
-      { path: '/register', element: <RegisterPage /> },
+      { path: '/login', element: withSuspense(LoginPage) },
+      { path: '/register', element: withSuspense(RegisterPage) },
     ],
   },
   {
@@ -34,18 +71,18 @@ const router = createBrowserRouter([
     children: [
       {
         path: 'onboarding',
-        element: <SmartOnboarding />,
+        element: withSuspense(SmartOnboarding),
       },
       {
         element: <MainLayout />,
         errorElement: <ErrorPage />,
         children: [
-          { index: true, element: <DashboardPage /> },
-          { path: 'scenarios', element: <ScenariosPage /> },
-          { path: 'ideation', element: <IdeationPage /> },
-          { path: 'roadmaps', element: <RoadmapsPage /> },
-          { path: 'roadmaps/:id', element: <RoadmapDetailPage /> },
-          { path: 'settings', element: <SettingsPage /> },
+          { index: true, element: withSuspense(DashboardPage) },
+          { path: 'scenarios', element: withSuspense(ScenariosPage) },
+          { path: 'ideation', element: withSuspense(IdeationPage) },
+          { path: 'roadmaps', element: withSuspense(RoadmapsPage) },
+          { path: 'roadmaps/:id', element: withSuspense(RoadmapDetailPage) },
+          { path: 'settings', element: withSuspense(SettingsPage) },
         ],
       },
     ],

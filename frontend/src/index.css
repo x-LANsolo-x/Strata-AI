@@ -1,10 +1,11 @@
+/* Import Inter font - MUST be first */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Tailwind CSS */
 @import "tailwindcss";
 
 @source "../index.html";
 @source "./**/*.{js,ts,jsx,tsx}";
-
-/* Import Inter font */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 /* Custom theme variables */
 @theme {

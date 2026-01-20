@@ -1,7 +1,9 @@
 from pydantic_settings import BaseSettings
+from functools import lru_cache
+
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str
+    PROJECT_NAME: str = "STRATA-AI"
     API_V1_STR: str = "/api/v1"
     ENVIRONMENT: str = "development"
     DEBUG: bool = False
@@ -14,10 +16,27 @@ class Settings(BaseSettings):
     # LLM Configuration
     GROQ_API_KEY: str = ""
     LLM_MODEL: str = "llama-3.3-70b-versatile"
+    
+    # Frontend URL for CORS (production)
+    FRONTEND_URL: str = ""
+    
+    # Rate limiting
+    RATE_LIMIT_PER_MINUTE: int = 60
 
     class Config:
         env_file = ".env"
         case_sensitive = True
         extra = "ignore"
 
-settings = Settings()
+
+@lru_cache()
+def get_settings() -> Settings:
+    """
+    Cached settings instance.
+    Uses lru_cache to avoid re-reading .env on every request.
+    """
+    return Settings()
+
+
+# Global settings instance
+settings = get_settings()
