@@ -10,6 +10,7 @@ FastAPI backend for the STRATA-AI startup survival and strategy assistant.
 - [Project Structure](#-project-structure)
 - [Setup](#-setup)
 - [API Endpoints](#-api-endpoints)
+- [Authentication](#-authentication)
 - [Services](#-services)
 - [Testing](#-testing)
 - [Environment Variables](#-environment-variables)
@@ -27,9 +28,11 @@ FastAPI backend for the STRATA-AI startup survival and strategy assistant.
 | **Pydantic** | 2.x | Data validation |
 | **python-jose** | 3.3+ | JWT authentication |
 | **bcrypt** | 4.1+ | Password hashing |
+| **google-auth** | 2.27+ | Google OAuth verification |
 | **Groq** | 0.4+ | LLM API client |
 | **scikit-learn** | 1.4+ | ML forecasting |
 | **pandas** | 2.2+ | Data manipulation |
+| **orjson** | 3.9+ | Fast JSON serialization |
 
 ---
 
@@ -45,7 +48,7 @@ backend/
 │   │   └── v1/
 │   │       ├── deps.py         # Dependency injection (auth)
 │   │       └── endpoints/
-│   │           ├── auth.py     # Register, Login
+│   │           ├── auth.py     # Register, Login, OAuth, Password Reset
 │   │           ├── financials.py # Financial CRUD + runway
 │   │           ├── forecast.py # Future projections
 │   │           ├── scenarios.py # What-if analysis
@@ -54,17 +57,17 @@ backend/
 │   │
 │   ├── core/
 │   │   ├── config.py           # Settings from .env
-│   │   └── security.py         # JWT & password utils
+│   │   └── security.py         # JWT, password utils, OAuth helpers
 │   │
 │   ├── db/
-│   │   └── engine.py           # MongoDB connection
+│   │   └── engine.py           # MongoDB connection with pooling
 │   │
 │   ├── models/
-│   │   ├── user.py             # User document model
+│   │   ├── user.py             # User document (with OAuth fields)
 │   │   └── financial.py        # Financial record model
 │   │
 │   ├── schemas/
-│   │   ├── user.py             # User request/response
+│   │   ├── user.py             # User, OAuth, Password reset schemas
 │   │   ├── token.py            # JWT token schema
 │   │   ├── financial.py        # Financial data schemas
 │   │   ├── forecast.py         # Forecast schemas
@@ -118,6 +121,7 @@ Edit `.env` with your values:
 - `MONGODB_URI` - MongoDB Atlas connection string
 - `SECRET_KEY` - Random string for JWT signing (32+ chars)
 - `GROQ_API_KEY` - Groq API key from [console.groq.com](https://console.groq.com)
+- `GOOGLE_CLIENT_ID` - (Optional) Google OAuth client ID
 
 ### 4. Run the Server
 
@@ -126,7 +130,7 @@ Edit `.env` with your values:
 uvicorn app.main:app --reload
 
 # Production
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 ```
 
 ### 5. Access
@@ -146,10 +150,16 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 | Endpoint | Method | Auth | Description |
 |----------|--------|------|-------------|
-| `/register` | POST | ❌ | Register new user |
+| `/register` | POST | ❌ | Register new user with email/password |
 | `/login` | POST | ❌ | Login (returns JWT token) |
+| `/google` | POST | ❌ | Login/Register with Google OAuth |
+| `/google/client-id` | GET | ❌ | Get Google Client ID for frontend |
+| `/forgot-password` | POST | ❌ | Request password reset email |
+| `/reset-password` | POST | ❌ | Reset password with token |
+| `/change-password` | POST | ✅ | Change password (logged in user) |
+| `/me` | GET | ✅ | Get current user info |
 
-**Register Request:**
+#### Register Request
 ```json
 {
   "email": "founder@startup.com",
@@ -158,16 +168,62 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 }
 ```
 
-**Login Request:** (form-urlencoded)
+#### Login Request (form-urlencoded)
 ```
 username=founder@startup.com&password=SecurePass123!
 ```
 
-**Login Response:**
+#### Login Response
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIs...",
   "token_type": "bearer"
+}
+```
+
+#### Google OAuth Request
+```json
+{
+  "credential": "google-id-token-from-frontend"
+}
+```
+
+#### Google OAuth Response
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIs...",
+  "token_type": "bearer",
+  "is_new_user": false,
+  "user": {
+    "id": "user123",
+    "email": "user@gmail.com",
+    "full_name": "John Doe",
+    "profile_picture": "https://...",
+    "oauth_provider": "google"
+  }
+}
+```
+
+#### Forgot Password Request
+```json
+{
+  "email": "founder@startup.com"
+}
+```
+
+#### Reset Password Request
+```json
+{
+  "token": "reset-token-from-email",
+  "new_password": "NewSecurePass123!"
+}
+```
+
+#### Change Password Request (requires auth)
+```json
+{
+  "current_password": "OldPass123!",
+  "new_password": "NewPass123!"
 }
 ```
 
@@ -183,7 +239,7 @@ username=founder@startup.com&password=SecurePass123!
 | `/forecast` | GET | ✅ | ML-based revenue forecast |
 | `/export` | GET | ✅ | Export all records |
 
-**Create Financial Record:**
+#### Create Financial Record
 ```json
 {
   "month": "2025-03",
@@ -197,7 +253,7 @@ username=founder@startup.com&password=SecurePass123!
 }
 ```
 
-**Runway Response:**
+#### Runway Response
 ```json
 {
   "current_month": "2025-03",
@@ -224,46 +280,6 @@ username=founder@startup.com&password=SecurePass123!
 - `exponential_smoothing` - Weighted recent data
 - `ensemble` - Combined methods (recommended)
 
-**Generate Forecast Request:**
-```json
-{
-  "periods": 6,
-  "method": "ensemble"
-}
-```
-
-**Forecast Response:**
-```json
-{
-  "method_used": "ensemble",
-  "forecast_generated_at": "2025-03-15T10:30:00",
-  "historical_months": 6,
-  "forecast_months": 6,
-  "projections": [
-    {
-      "month": "2025-04",
-      "predicted_revenue": 6500,
-      "predicted_expenses": 7800,
-      "predicted_cash_balance": 48700,
-      "predicted_burn_rate": 1300,
-      "predicted_runway_months": 37.5,
-      "confidence_lower": 5800,
-      "confidence_upper": 7200,
-      "risk_level": "low"
-    }
-  ],
-  "summary": {
-    "current_cash_balance": 50000,
-    "average_predicted_burn_rate": 1500,
-    "final_predicted_cash_balance": 41000,
-    "final_predicted_runway_months": 27.3,
-    "critical_runway_month": null,
-    "trend": "improving",
-    "recommendation": "Growth metrics trending positive. Consider strategic investments."
-  }
-}
-```
-
 ---
 
 ### 🎯 Scenarios (`/api/v1/scenarios`)
@@ -284,35 +300,6 @@ username=founder@startup.com&password=SecurePass123!
 - `cut_expenses` - Cost reduction
 - `custom` - Custom scenario
 
-**Simulate Request:**
-```json
-{
-  "scenario_type": "hire_employee",
-  "name": "Hire Senior Developer",
-  "new_salary": 8000,
-  "num_hires": 1
-}
-```
-
-**Compare Request:**
-```json
-{
-  "scenarios": [
-    {
-      "scenario_type": "hire_employee",
-      "name": "Hire Developer",
-      "new_salary": 6000,
-      "num_hires": 1
-    },
-    {
-      "scenario_type": "receive_investment",
-      "name": "Seed Round",
-      "investment_amount": 250000
-    }
-  ]
-}
-```
-
 ---
 
 ### 💡 AI (`/api/v1/ai`)
@@ -320,26 +307,6 @@ username=founder@startup.com&password=SecurePass123!
 | Endpoint | Method | Auth | Description |
 |----------|--------|------|-------------|
 | `/suggest-strategy` | POST | ✅ | Get AI-generated pivot strategies |
-
-**Response:**
-```json
-{
-  "suggestions": [
-    {
-      "title": "Vertical SaaS for Logistics",
-      "description": "Pivot to serve mid-market logistics companies...",
-      "impact_score": 8,
-      "difficulty": "Medium"
-    },
-    {
-      "title": "API-as-a-Service Model",
-      "description": "Productize your backend capabilities...",
-      "impact_score": 7,
-      "difficulty": "Low"
-    }
-  ]
-}
-```
 
 ---
 
@@ -352,6 +319,34 @@ username=founder@startup.com&password=SecurePass123!
 | `/{id}` | GET | ✅ | Get roadmap details |
 | `/{id}` | PUT | ✅ | Update roadmap |
 | `/{id}` | DELETE | ✅ | Delete roadmap |
+
+---
+
+## 🔐 Authentication
+
+### JWT Token Flow
+
+1. User logs in (email/password or Google OAuth)
+2. Server returns JWT access token
+3. Client includes token in `Authorization: Bearer <token>` header
+4. Server validates token on protected endpoints
+
+### Google OAuth Flow
+
+1. Frontend loads Google Sign-In button
+2. User clicks and authenticates with Google
+3. Frontend receives Google ID token
+4. Frontend sends token to `/auth/google`
+5. Backend verifies token with Google
+6. Backend creates/updates user and returns JWT
+
+### Password Reset Flow
+
+1. User requests reset at `/auth/forgot-password`
+2. Server generates reset token (1 hour expiry)
+3. In dev mode: token returned directly for testing
+4. In production: token sent via email
+5. User submits new password with token to `/auth/reset-password`
 
 ---
 
@@ -411,12 +406,26 @@ python -m pytest tests/ --cov=app --cov-report=html
 | `PROJECT_NAME` | ❌ | STRATA-AI | App name |
 | `API_V1_STR` | ❌ | /api/v1 | API prefix |
 | `ENVIRONMENT` | ❌ | development | Environment name |
-| `DEBUG` | ❌ | False | Debug mode |
-| `SECRET_KEY` | ✅ | - | JWT signing key |
+| `DEBUG` | ❌ | False | Debug mode (enables Swagger) |
+| `SECRET_KEY` | ✅ | - | JWT signing key (32+ chars) |
 | `MONGODB_URI` | ✅ | - | MongoDB connection |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | ❌ | 1440 | Token lifetime |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | ❌ | 1440 | Token lifetime (24h) |
 | `GROQ_API_KEY` | ✅ | - | Groq API key |
 | `LLM_MODEL` | ❌ | llama-3.3-70b-versatile | LLM model |
+| `GOOGLE_CLIENT_ID` | ❌ | - | Google OAuth Client ID |
+| `GOOGLE_CLIENT_SECRET` | ❌ | - | Google OAuth Secret |
+| `FRONTEND_URL` | ❌ | - | Frontend URL for CORS |
+
+---
+
+## 🚀 Performance Optimizations
+
+- **ORJSONResponse** - 2-3x faster JSON serialization
+- **GZip Compression** - 50-70% bandwidth reduction
+- **Connection Pooling** - 5-50 MongoDB connections
+- **Database Indexes** - Optimized query performance
+- **Cached Settings** - No repeated .env reads
+- **Security Headers** - XSS, clickjacking protection
 
 ---
 

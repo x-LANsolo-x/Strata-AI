@@ -25,6 +25,7 @@ Complete technical architecture documentation for the STRATA-AI project.
 | **Separation of Concerns** | Clear boundaries between frontend, backend, and AI layers |
 | **Provider Agnostic** | LLM layer abstracted to support multiple providers |
 | **Stateless Backend** | No server-side sessions; JWT for authentication |
+| **Multi-Auth Support** | Email/password + OAuth providers (Google) |
 | **Free-Tier Compatible** | All components designed to run on free hosting tiers |
 | **Privacy-First Option** | Support for local LLM deployment via Ollama |
 | **API-First Design** | Backend exposes RESTful API consumed by frontend |

@@ -12,6 +12,7 @@
 ## 📋 Table of Contents
 
 - [Features](#-features)
+- [Authentication](#-authentication)
 - [Tech Stack](#-tech-stack)
 - [Project Structure](#-project-structure)
 - [Quick Start](#-quick-start)
@@ -28,7 +29,8 @@
 
 | Feature | Description | Status |
 |---------|-------------|--------|
-| **🔐 User Authentication** | Secure JWT-based login/registration with onboarding wizard | ✅ |
+| **🔐 User Authentication** | Email/password + Google OAuth with JWT tokens | ✅ |
+| **🔑 Password Management** | Reset via email, change password when logged in | ✅ |
 | **📊 Financial Data Management** | Manual entry + CSV import for revenue, expenses, cash balance | ✅ |
 | **📈 AI Runway Predictor** | Real-time runway calculation with trend analysis & alerts | ✅ |
 | **🔮 Future Condition Simulator** | Project financial health on any future date (1mo - 3yrs) | ✅ |
@@ -36,6 +38,36 @@
 | **💡 AI Ideation Engine** | LLM-generated pivot strategies based on your context | ✅ |
 | **🗺️ Smart Execution Roadmaps** | Convert strategies into milestone-based action plans | ✅ |
 | **🤖 Hybrid LLM Provider** | Groq (default), OpenAI, Gemini, Ollama support | ✅ |
+
+---
+
+## 🔐 Authentication
+
+STRATA-AI supports multiple authentication methods:
+
+### Sign Up / Sign In Options
+
+| Method | Description | Status |
+|--------|-------------|--------|
+| **Email/Password** | Traditional registration with email verification | ✅ |
+| **Google OAuth** | One-click sign in with Google account | ✅ |
+| **GitHub OAuth** | Sign in with GitHub account | 🔜 Coming Soon |
+
+### Password Management
+
+| Feature | Description |
+|---------|-------------|
+| **Forgot Password** | Request reset link via email |
+| **Reset Password** | Set new password with secure token |
+| **Change Password** | Update password when logged in |
+
+### Security Features
+
+- 🔒 JWT tokens with configurable expiration
+- 🔒 Bcrypt password hashing
+- 🔒 OAuth token verification with providers
+- 🔒 Account linking (email ↔ OAuth)
+- 🔒 Protected routes with authentication middleware
 
 ---
 
@@ -50,6 +82,7 @@
 | **Beanie ODM** | Async MongoDB object-document mapper |
 | **Pydantic v2** | Data validation and serialization |
 | **python-jose** | JWT token handling |
+| **google-auth** | Google OAuth verification |
 | **Groq API** | Default LLM provider (Llama 3.3 70B) |
 | **scikit-learn** | ML-based forecasting |
 
@@ -75,7 +108,7 @@ strata-ai/
 ├── backend/                    # FastAPI Backend
 │   ├── app/
 │   │   ├── api/v1/endpoints/   # API route handlers
-│   │   │   ├── auth.py         # Authentication endpoints
+│   │   │   ├── auth.py         # Authentication (email, Google OAuth)
 │   │   │   ├── financials.py   # Financial data CRUD
 │   │   │   ├── forecast.py     # Future projections
 │   │   │   ├── scenarios.py    # What-if analysis
@@ -98,14 +131,15 @@ strata-ai/
 │
 ├── frontend/                   # React Frontend
 │   ├── src/
-│   │   ├── components/         # Reusable UI components
+│   │   ├── components/
+│   │   │   ├── auth/           # GoogleSignInButton
 │   │   │   ├── charts/         # Financial visualizations
 │   │   │   ├── forms/          # Input forms
 │   │   │   ├── layout/         # Header, Sidebar, MainLayout
 │   │   │   ├── shared/         # Common components
 │   │   │   └── ui/             # Base UI elements
-│   │   ├── pages/              # Route pages
-│   │   │   ├── auth/           # Login, Register
+│   │   ├── pages/
+│   │   │   ├── auth/           # Login, Register, ForgotPassword, ResetPassword
 │   │   │   ├── dashboard/      # Main dashboard
 │   │   │   ├── scenarios/      # Scenario analyzer
 │   │   │   ├── ideation/       # AI suggestions
@@ -134,6 +168,7 @@ strata-ai/
 - **Node.js 18+** and npm
 - **MongoDB Atlas** account (free tier works)
 - **Groq API Key** (free at [console.groq.com](https://console.groq.com))
+- **Google Cloud Console** (optional, for Google OAuth)
 
 ### 1. Clone & Navigate
 
@@ -157,7 +192,7 @@ pip install -r requirements.txt
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your MongoDB URI, Secret Key, and Groq API Key
+# Edit .env with your MongoDB URI, Secret Key, Groq API Key, and optionally Google OAuth
 
 # Run the server
 uvicorn app.main:app --reload
@@ -187,44 +222,50 @@ Frontend will be available at: **http://localhost:5173**
 
 ### Authentication
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/auth/register` | POST | Register new user |
-| `/api/v1/auth/login` | POST | Login (returns JWT) |
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/v1/auth/register` | POST | ❌ | Register with email/password |
+| `/api/v1/auth/login` | POST | ❌ | Login (returns JWT) |
+| `/api/v1/auth/google` | POST | ❌ | Login/Register with Google |
+| `/api/v1/auth/google/client-id` | GET | ❌ | Get Google Client ID |
+| `/api/v1/auth/forgot-password` | POST | ❌ | Request password reset |
+| `/api/v1/auth/reset-password` | POST | ❌ | Reset password with token |
+| `/api/v1/auth/change-password` | POST | ✅ | Change password (logged in) |
+| `/api/v1/auth/me` | GET | ✅ | Get current user info |
 
 ### Financial Data
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/financials/` | POST | Create financial record |
-| `/api/v1/financials/runway` | GET | Get current runway |
-| `/api/v1/financials/import` | POST | Import CSV data |
-| `/api/v1/financials/forecast` | GET | ML revenue forecast |
-| `/api/v1/financials/export` | GET | Export all records |
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/v1/financials/` | POST | ✅ | Create financial record |
+| `/api/v1/financials/runway` | GET | ✅ | Get current runway |
+| `/api/v1/financials/import` | POST | ✅ | Import CSV data |
+| `/api/v1/financials/forecast` | GET | ✅ | ML revenue forecast |
+| `/api/v1/financials/export` | GET | ✅ | Export all records |
 
 ### Forecasting
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/forecast/generate` | POST | Generate multi-period forecast |
-| `/api/v1/forecast/project-to-date` | POST | Project to specific date |
-| `/api/v1/forecast/methods` | GET | Available forecast methods |
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/v1/forecast/generate` | POST | ✅ | Generate multi-period forecast |
+| `/api/v1/forecast/project-to-date` | POST | ✅ | Project to specific date |
+| `/api/v1/forecast/methods` | GET | ❌ | Available forecast methods |
 
 ### Scenarios
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/scenarios/simulate` | POST | Run single scenario |
-| `/api/v1/scenarios/compare` | POST | Compare multiple scenarios |
-| `/api/v1/scenarios/templates` | GET | Get scenario templates |
-| `/api/v1/scenarios/baseline` | GET | Current financial baseline |
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/v1/scenarios/simulate` | POST | ✅ | Run single scenario |
+| `/api/v1/scenarios/compare` | POST | ✅ | Compare multiple scenarios |
+| `/api/v1/scenarios/templates` | GET | ❌ | Get scenario templates |
+| `/api/v1/scenarios/baseline` | GET | ✅ | Current financial baseline |
 
 ### AI & Roadmaps
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/ai/suggest-strategy` | POST | Get AI pivot suggestions |
-| `/api/v1/roadmaps/` | GET/POST | Manage execution roadmaps |
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/v1/ai/suggest-strategy` | POST | ✅ | Get AI pivot suggestions |
+| `/api/v1/roadmaps/` | GET/POST | ✅ | Manage execution roadmaps |
 
 ---
 
@@ -282,7 +323,21 @@ MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/?retryWrites=true
 # LLM Configuration
 GROQ_API_KEY=gsk_your_groq_api_key
 LLM_MODEL=llama-3.3-70b-versatile
+
+# Google OAuth (Optional)
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret
 ```
+
+### Setting Up Google OAuth
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Create a new project or select existing
+3. Create **OAuth 2.0 Client ID** (Web application)
+4. Add **Authorized JavaScript Origins**:
+   - `http://localhost:5173` (development)
+   - `https://your-domain.com` (production)
+5. Copy Client ID and Secret to `.env`
 
 ---
 
@@ -309,6 +364,8 @@ LLM_MODEL=llama-3.3-70b-versatile
 3. Whitelist IP addresses (or 0.0.0.0/0 for development)
 4. Get connection string for `.env`
 
+For detailed deployment instructions, see [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)
+
 ---
 
 ## 🤝 Contributing
@@ -332,6 +389,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Groq** for free LLM API access
 - **MongoDB Atlas** for free database hosting
 - **Vercel** and **Render** for free deployment tiers
+- **Google** for OAuth services
 
 ---
 

@@ -12,6 +12,7 @@ Complete guide for deploying STRATA-AI to production using free-tier services.
 - [Backend Deployment (Render)](#-backend-deployment-render)
 - [Frontend Deployment (Vercel)](#-frontend-deployment-vercel)
 - [LLM Configuration (Groq)](#-llm-configuration-groq)
+- [Google OAuth Setup](#-google-oauth-setup)
 - [Environment Variables](#-environment-variables)
 - [Post-Deployment Checklist](#-post-deployment-checklist)
 - [Troubleshooting](#-troubleshooting)
@@ -28,6 +29,7 @@ STRATA-AI is designed to run entirely on free-tier cloud services:
 | **Backend** | Render | Free | Free |
 | **Frontend** | Vercel | Hobby | Free |
 | **LLM** | Groq | Free API | Free |
+| **OAuth** | Google Cloud | Free | Free |
 
 **Estimated monthly cost: $0**
 
@@ -42,6 +44,7 @@ Before deploying, ensure you have:
 - [ ] Render account
 - [ ] Vercel account
 - [ ] Groq API key
+- [ ] Google Cloud Console account (for OAuth)
 
 ---
 
@@ -107,7 +110,7 @@ Before deploying, ensure you have:
 | **Name** | `strata-ai-backend` |
 | **Region** | Choose closest to your users |
 | **Branch** | `main` (or your production branch) |
-| **Root Directory** | `backend` |
+| **Root Directory** | `backend` (or `strata-ai/backend`) |
 | **Runtime** | Python 3 |
 | **Build Command** | `pip install -r requirements.txt` |
 | **Start Command** | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
@@ -128,6 +131,9 @@ Click **"Environment"** and add:
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `1440` |
 | `GROQ_API_KEY` | `<your-groq-api-key>` |
 | `LLM_MODEL` | `llama-3.3-70b-versatile` |
+| `GOOGLE_CLIENT_ID` | `<your-google-client-id>` |
+| `GOOGLE_CLIENT_SECRET` | `<your-google-client-secret>` |
+| `FRONTEND_URL` | `https://your-app.vercel.app` |
 
 ### Step 4: Deploy
 
@@ -152,11 +158,18 @@ print(secrets.token_urlsafe(32))
 
 Before deploying, update the API URL in your frontend:
 
-**File:** `frontend/src/services/api.client.ts`
+**Option A: Environment Variable**
 
+Create `.env.production`:
+```env
+VITE_API_URL=https://strata-ai-backend.onrender.com/api/v1
+```
+
+**Option B: Direct Update**
+
+Edit `frontend/src/services/api.client.ts`:
 ```typescript
-// Change from localhost to your Render URL
-const API_BASE_URL = 'https://strata-ai-backend.onrender.com/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://strata-ai-backend.onrender.com/api/v1';
 ```
 
 Commit and push this change.
@@ -173,23 +186,16 @@ Commit and push this change.
 | Setting | Value |
 |---------|-------|
 | **Framework Preset** | Vite |
-| **Root Directory** | `frontend` |
+| **Root Directory** | `frontend` (or `strata-ai/frontend`) |
 | **Build Command** | `npm run build` |
 | **Output Directory** | `dist` |
 | **Install Command** | `npm install` |
 
-### Step 4: Environment Variables (Optional)
-
-If you want to use environment variables for the API URL:
+### Step 4: Environment Variables
 
 | Key | Value |
 |-----|-------|
 | `VITE_API_URL` | `https://strata-ai-backend.onrender.com/api/v1` |
-
-Then update `api.client.ts`:
-```typescript
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api/v1';
-```
 
 ### Step 5: Deploy
 
@@ -219,6 +225,84 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api/
 
 ---
 
+## 🔐 Google OAuth Setup
+
+### Step 1: Create Google Cloud Project
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Click **"Select a project"** → **"New Project"**
+3. Name: `STRATA-AI`
+4. Click **"Create"**
+
+### Step 2: Enable APIs
+
+1. Go to **APIs & Services** → **Library**
+2. Search for and enable:
+   - **Google Identity Services**
+   - **Google People API** (optional, for profile info)
+
+### Step 3: Configure OAuth Consent Screen
+
+1. Go to **APIs & Services** → **OAuth consent screen**
+2. Select **External** (for public access)
+3. Fill in required fields:
+   - App name: `STRATA-AI`
+   - User support email: Your email
+   - Developer contact: Your email
+4. Click **"Save and Continue"**
+5. Skip scopes (defaults are fine)
+6. Add test users if needed
+7. Click **"Save and Continue"**
+
+### Step 4: Create OAuth Credentials
+
+1. Go to **APIs & Services** → **Credentials**
+2. Click **"Create Credentials"** → **"OAuth client ID"**
+3. Application type: **Web application**
+4. Name: `STRATA-AI Web Client`
+
+5. **Authorized JavaScript origins** (add all):
+   ```
+   http://localhost:5173
+   http://localhost:3000
+   http://127.0.0.1:5173
+   https://strata-ai.vercel.app
+   https://your-custom-domain.com
+   ```
+
+6. **Authorized redirect URIs** (optional, may not be needed):
+   ```
+   http://localhost:5173
+   https://strata-ai.vercel.app
+   ```
+
+7. Click **"Create"**
+
+### Step 5: Copy Credentials
+
+1. Copy **Client ID** (ends with `.apps.googleusercontent.com`)
+2. Copy **Client Secret**
+3. Add to your backend environment:
+   - `GOOGLE_CLIENT_ID`
+   - `GOOGLE_CLIENT_SECRET`
+
+### Step 6: Verify Setup
+
+After deploying:
+1. Visit your frontend
+2. Click "Sign in with Google"
+3. Google popup should appear
+4. After sign-in, you should be redirected to dashboard
+
+### Production Checklist for Google OAuth
+
+- [ ] Added production frontend URL to authorized origins
+- [ ] OAuth consent screen published (not in testing mode)
+- [ ] Verified domain ownership (if required)
+- [ ] Tested sign-in flow on production
+
+---
+
 ## 🔐 Environment Variables
 
 ### Complete List
@@ -234,13 +318,16 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api/
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | ❌ | `1440` |
 | `GROQ_API_KEY` | ✅ | `gsk_...` |
 | `LLM_MODEL` | ❌ | `llama-3.3-70b-versatile` |
+| `GOOGLE_CLIENT_ID` | ❌ | `xxx.apps.googleusercontent.com` |
+| `GOOGLE_CLIENT_SECRET` | ❌ | `GOCSPX-xxx` |
+| `FRONTEND_URL` | ❌ | `https://your-app.vercel.app` |
 
 ### Security Notes
 
 - Never commit `.env` files to git
 - Use Render's secret environment variables
 - Rotate `SECRET_KEY` periodically
-- Keep `GROQ_API_KEY` secure
+- Keep `GROQ_API_KEY` and `GOOGLE_CLIENT_SECRET` secure
 
 ---
 
@@ -249,18 +336,31 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api/
 ### Backend Verification
 
 - [ ] Health check returns OK: `GET /health`
-- [ ] API docs accessible: `GET /docs`
+- [ ] API docs accessible (if DEBUG=True): `GET /docs`
 - [ ] Can register new user: `POST /api/v1/auth/register`
 - [ ] Can login: `POST /api/v1/auth/login`
+- [ ] Google OAuth client ID endpoint works: `GET /api/v1/auth/google/client-id`
 - [ ] Database connection working
 
 ### Frontend Verification
 
 - [ ] Login page loads
-- [ ] Can register and login
+- [ ] Google Sign-In button appears (if configured)
+- [ ] Can register and login with email
+- [ ] Can sign in with Google
 - [ ] Dashboard loads after login
 - [ ] API calls succeed (check browser console)
 - [ ] Charts render correctly
+
+### Authentication Verification
+
+- [ ] Email/password registration works
+- [ ] Email/password login works
+- [ ] Google OAuth sign-in works
+- [ ] Google OAuth sign-up works
+- [ ] Password reset request works
+- [ ] Password reset with token works
+- [ ] JWT token persists across page refresh
 
 ### Integration Verification
 
@@ -297,14 +397,29 @@ Check token expiration settings
 Verify algorithm is HS256
 ```
 
+**Google OAuth fails:**
+```
+Verify GOOGLE_CLIENT_ID is correct
+Check authorized origins include your frontend URL
+Ensure OAuth consent screen is configured
+Check browser console for specific errors
+```
+
 ### Frontend Issues
 
 **API calls fail:**
 ```
-Check CORS settings in backend
-Verify API_BASE_URL is correct
+Check CORS settings in backend (FRONTEND_URL)
+Verify VITE_API_URL is correct
 Check browser console for errors
 Ensure backend is running
+```
+
+**Google Sign-In button not appearing:**
+```
+Check backend /auth/google/client-id endpoint
+Verify GOOGLE_CLIENT_ID is set in backend
+Check browser console for errors
 ```
 
 **Build fails on Vercel:**
@@ -323,14 +438,8 @@ Check node_modules not in gitignore
 
 **CORS errors:**
 - Verify frontend URL is in backend CORS origins
-- Update `app/main.py` with production URL
-
-```python
-origins = [
-    "http://localhost:5173",
-    "https://strata-ai.vercel.app",  # Add your Vercel URL
-]
-```
+- Set `FRONTEND_URL` environment variable
+- Update `app/main.py` with production URL if needed
 
 ---
 
@@ -382,7 +491,17 @@ Your STRATA-AI instance should now be live at:
 
 - **Frontend:** `https://strata-ai.vercel.app`
 - **Backend:** `https://strata-ai-backend.onrender.com`
-- **API Docs:** `https://strata-ai-backend.onrender.com/docs`
+- **API Docs:** `https://strata-ai-backend.onrender.com/docs` (if DEBUG=True)
+
+**Features Available:**
+- ✅ Email/Password Authentication
+- ✅ Google OAuth Sign-In
+- ✅ Password Reset
+- ✅ Financial Data Management
+- ✅ AI Runway Prediction
+- ✅ Scenario Analysis
+- ✅ AI Strategy Suggestions
+- ✅ Execution Roadmaps
 
 ---
 

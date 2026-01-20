@@ -10,6 +10,7 @@ React TypeScript frontend for the STRATA-AI startup survival and strategy assist
 - [Project Structure](#-project-structure)
 - [Setup](#-setup)
 - [Available Scripts](#-available-scripts)
+- [Authentication](#-authentication)
 - [Pages & Features](#-pages--features)
 - [Component Library](#-component-library)
 - [State Management](#-state-management)
@@ -49,6 +50,9 @@ frontend/
 │   ├── assets/                 # Static assets
 │   │
 │   ├── components/
+│   │   ├── auth/               # Authentication components
+│   │   │   └── GoogleSignInButton.tsx  # Google OAuth button
+│   │   │
 │   │   ├── charts/             # Financial visualizations
 │   │   │   ├── CashFlowChart.tsx
 │   │   │   ├── ExpenseBreakdown.tsx
@@ -84,8 +88,10 @@ frontend/
 │   │
 │   ├── pages/                  # Route pages
 │   │   ├── auth/
-│   │   │   ├── LoginPage.tsx
-│   │   │   └── RegisterPage.tsx
+│   │   │   ├── LoginPage.tsx           # Email + Google login
+│   │   │   ├── RegisterPage.tsx        # Email + Google signup
+│   │   │   ├── ForgotPasswordPage.tsx  # Password reset request
+│   │   │   └── ResetPasswordPage.tsx   # Set new password
 │   │   │
 │   │   ├── dashboard/
 │   │   │   └── DashboardPage.tsx
@@ -186,14 +192,87 @@ Output will be in the `dist/` folder.
 
 ---
 
+## 🔐 Authentication
+
+### Supported Methods
+
+| Method | Component | Route |
+|--------|-----------|-------|
+| **Email/Password** | LoginPage, RegisterPage | `/login`, `/register` |
+| **Google OAuth** | GoogleSignInButton | Embedded in login/register |
+| **Password Reset** | ForgotPasswordPage, ResetPasswordPage | `/forgot-password`, `/reset-password` |
+
+### Authentication Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Authentication Flow                       │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│   Login Page                    Register Page                │
+│   ┌─────────────────┐          ┌─────────────────┐         │
+│   │ Email           │          │ Full Name       │         │
+│   │ Password        │          │ Email           │         │
+│   │ [Sign In]       │          │ Password        │         │
+│   │                 │          │ [Create Account]│         │
+│   │ ── OR ──────    │          │                 │         │
+│   │                 │          │ ── OR ──────    │         │
+│   │ [Google Sign-In]│          │ [Google Sign-Up]│         │
+│   │                 │          │                 │         │
+│   │ Forgot password?│          │                 │         │
+│   └────────┬────────┘          └────────┬────────┘         │
+│            │                            │                   │
+│            ▼                            ▼                   │
+│   ┌─────────────────────────────────────────────┐          │
+│   │              Auth Store (Zustand)            │          │
+│   │  • user: { id, email, fullName }            │          │
+│   │  • token: JWT access token                  │          │
+│   │  • isAuthenticated: boolean                 │          │
+│   └─────────────────────────────────────────────┘          │
+│                          │                                  │
+│                          ▼                                  │
+│            ┌─────────────────────────┐                     │
+│            │   New User → Onboarding │                     │
+│            │   Existing → Dashboard  │                     │
+│            └─────────────────────────┘                     │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### GoogleSignInButton Component
+
+```tsx
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
+
+<GoogleSignInButton
+  text="signin_with"  // or "signup_with", "continue_with"
+  onSuccess={(response) => {
+    // response.access_token - JWT token
+    // response.user - User object
+    // response.is_new_user - Boolean
+  }}
+  onError={(error) => console.error(error)}
+/>
+```
+
+**Features:**
+- Dynamically loads Google Identity Services script
+- Fetches Client ID from backend
+- Gracefully hidden if Google OAuth not configured
+- Handles new user vs existing user flows
+
+---
+
 ## 📄 Pages & Features
 
-### 🔐 Authentication
+### 🔐 Authentication Pages
 
 | Page | Route | Features |
 |------|-------|----------|
-| **Login** | `/login` | Email/password login, JWT storage |
-| **Register** | `/register` | User registration with validation |
+| **Login** | `/login` | Email/password, Google OAuth, forgot password link |
+| **Register** | `/register` | Email/password, Google OAuth, terms acceptance |
+| **Forgot Password** | `/forgot-password` | Email input, sends reset link |
+| **Reset Password** | `/reset-password` | New password form with token validation |
 
 ### 📊 Dashboard
 
@@ -252,6 +331,12 @@ Output will be in the `dist/` folder.
 
 ## 🧩 Component Library
 
+### Auth Components (`/components/auth/`)
+
+| Component | Description |
+|-----------|-------------|
+| `GoogleSignInButton` | Google OAuth sign-in button with automatic setup |
+
 ### Charts (`/components/charts/`)
 
 | Component | Description |
@@ -291,9 +376,8 @@ interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (user: User, token: string) => void;
   logout: () => void;
-  register: (data: RegisterData) => Promise<void>;
 }
 ```
 
@@ -318,9 +402,10 @@ interface UIState {
 
 Base HTTP client with:
 - Automatic JWT token injection
+- Request deduplication
+- Timeout handling (30s)
 - Error handling
-- JSON parsing
-- Form data support
+- GZip support
 
 ```typescript
 import { apiClient } from './services/api.client';
@@ -398,17 +483,16 @@ Utility-first CSS framework with custom configuration.
 ### Theme Colors
 
 ```css
-/* Primary colors */
---primary: #3B82F6;     /* Blue */
---success: #10B981;     /* Green */
---warning: #F59E0B;     /* Amber */
---danger: #EF4444;      /* Red */
+/* Primary colors (Green theme) */
+--color-primary-500: #1B8A6B;
 
-/* Risk status colors */
---risk-low: #10B981;
---risk-medium: #F59E0B;
---risk-high: #F97316;
---risk-critical: #EF4444;
+/* Status colors */
+--color-success: #22c55e;
+--color-danger: #ef4444;
+--color-warning: #f97316;
+
+/* Background */
+--color-cream-100: #F5F5F0;
 ```
 
 ### Responsive Breakpoints
@@ -423,16 +507,30 @@ Utility-first CSS framework with custom configuration.
 
 ---
 
+## 🚀 Performance Optimizations
+
+- **Lazy Loading** - Pages load on-demand
+- **Code Splitting** - 21 separate chunks
+- **Vendor Chunks** - Better browser caching
+- **React Query Cache** - 5min stale, 30min cache
+- **Request Deduplication** - No duplicate API calls
+- **Font Preloading** - Faster text rendering
+
+---
+
 ## 🌐 Environment
 
-### Backend URL
+### API URL Configuration
 
-The API client connects to:
 ```typescript
-const API_BASE_URL = 'http://127.0.0.1:8000/api/v1';
+// Default: http://127.0.0.1:8000/api/v1
+// Can be overridden with VITE_API_URL environment variable
 ```
 
-For production, update this in `api.client.ts` or use environment variables.
+Create `.env.local` for local overrides:
+```env
+VITE_API_URL=http://localhost:8000/api/v1
+```
 
 ---
 
