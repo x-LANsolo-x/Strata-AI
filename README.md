@@ -1,0 +1,340 @@
+# 🚀 STRATA-AI
+
+**AI-powered startup survival and strategy assistant** that predicts financial runway, simulates future business conditions, and generates actionable pivot strategies—transforming assumption-based founder decisions into data-driven survival plans.
+
+[![Tests](https://img.shields.io/badge/tests-72%20passed-brightgreen)](#-test-results)
+[![Backend](https://img.shields.io/badge/backend-FastAPI-009688)](./backend)
+[![Frontend](https://img.shields.io/badge/frontend-React%2019-61DAFB)](./frontend)
+[![License](https://img.shields.io/badge/license-MIT-blue)](#license)
+
+---
+
+## 📋 Table of Contents
+
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
+- [Quick Start](#-quick-start)
+- [API Documentation](#-api-documentation)
+- [Test Results](#-test-results)
+- [Configuration](#-configuration)
+- [Deployment](#-deployment)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+---
+
+## ✨ Features
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| **🔐 User Authentication** | Secure JWT-based login/registration with onboarding wizard | ✅ |
+| **📊 Financial Data Management** | Manual entry + CSV import for revenue, expenses, cash balance | ✅ |
+| **📈 AI Runway Predictor** | Real-time runway calculation with trend analysis & alerts | ✅ |
+| **🔮 Future Condition Simulator** | Project financial health on any future date (1mo - 3yrs) | ✅ |
+| **🎯 What-If Scenario Analyzer** | Test hiring, pricing, funding scenarios before execution | ✅ |
+| **💡 AI Ideation Engine** | LLM-generated pivot strategies based on your context | ✅ |
+| **🗺️ Smart Execution Roadmaps** | Convert strategies into milestone-based action plans | ✅ |
+| **🤖 Hybrid LLM Provider** | Groq (default), OpenAI, Gemini, Ollama support | ✅ |
+
+---
+
+## 🛠️ Tech Stack
+
+### Backend
+| Technology | Purpose |
+|------------|---------|
+| **FastAPI** | High-performance async Python web framework |
+| **Python 3.11+** | Backend runtime |
+| **MongoDB Atlas** | Cloud database (free tier compatible) |
+| **Beanie ODM** | Async MongoDB object-document mapper |
+| **Pydantic v2** | Data validation and serialization |
+| **python-jose** | JWT token handling |
+| **Groq API** | Default LLM provider (Llama 3.3 70B) |
+| **scikit-learn** | ML-based forecasting |
+
+### Frontend
+| Technology | Purpose |
+|------------|---------|
+| **React 19** | UI framework |
+| **TypeScript** | Type-safe JavaScript |
+| **Vite** | Fast build tool and dev server |
+| **TailwindCSS** | Utility-first CSS framework |
+| **Zustand** | Lightweight state management |
+| **React Query** | Server state management |
+| **Chart.js** | Financial visualizations |
+| **React Hook Form** | Form handling with Zod validation |
+| **Framer Motion** | Animations |
+
+---
+
+## 📁 Project Structure
+
+```
+strata-ai/
+├── backend/                    # FastAPI Backend
+│   ├── app/
+│   │   ├── api/v1/endpoints/   # API route handlers
+│   │   │   ├── auth.py         # Authentication endpoints
+│   │   │   ├── financials.py   # Financial data CRUD
+│   │   │   ├── forecast.py     # Future projections
+│   │   │   ├── scenarios.py    # What-if analysis
+│   │   │   ├── ai.py           # AI strategy suggestions
+│   │   │   └── roadmaps.py     # Execution roadmaps
+│   │   ├── core/               # Config & security
+│   │   ├── db/                 # Database connection
+│   │   ├── models/             # MongoDB document models
+│   │   ├── schemas/            # Pydantic request/response schemas
+│   │   └── services/           # Business logic
+│   │       ├── runway_engine.py
+│   │       ├── forecast_engine.py
+│   │       ├── scenario_engine.py
+│   │       ├── ai_service.py
+│   │       └── ml_forecast.py
+│   ├── tests/
+│   ├── .env.example
+│   ├── requirements.txt
+│   └── README.md
+│
+├── frontend/                   # React Frontend
+│   ├── src/
+│   │   ├── components/         # Reusable UI components
+│   │   │   ├── charts/         # Financial visualizations
+│   │   │   ├── forms/          # Input forms
+│   │   │   ├── layout/         # Header, Sidebar, MainLayout
+│   │   │   ├── shared/         # Common components
+│   │   │   └── ui/             # Base UI elements
+│   │   ├── pages/              # Route pages
+│   │   │   ├── auth/           # Login, Register
+│   │   │   ├── dashboard/      # Main dashboard
+│   │   │   ├── scenarios/      # Scenario analyzer
+│   │   │   ├── ideation/       # AI suggestions
+│   │   │   └── roadmaps/       # Execution plans
+│   │   ├── services/           # API client & services
+│   │   ├── stores/             # Zustand state stores
+│   │   ├── hooks/              # Custom React hooks
+│   │   └── types/              # TypeScript definitions
+│   ├── package.json
+│   └── README.md
+│
+├── docs/                       # Documentation
+│   ├── architecture/           # Technical architecture docs
+│   └── prd/                    # Product Requirements Document
+│
+└── ml/                         # Machine Learning (placeholder)
+```
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- **Python 3.11+** (or 3.14 as tested)
+- **Node.js 18+** and npm
+- **MongoDB Atlas** account (free tier works)
+- **Groq API Key** (free at [console.groq.com](https://console.groq.com))
+
+### 1. Clone & Navigate
+
+```bash
+git clone https://github.com/x-LANsolo-x/Strata-AI.git
+cd Strata-AI/strata-ai
+```
+
+### 2. Backend Setup
+
+```bash
+cd backend
+
+# Create virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# or: .\venv\Scripts\activate  # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your MongoDB URI, Secret Key, and Groq API Key
+
+# Run the server
+uvicorn app.main:app --reload
+```
+
+Backend will be available at: **http://127.0.0.1:8000**
+- API Docs: http://127.0.0.1:8000/docs
+- Health Check: http://127.0.0.1:8000/health
+
+### 3. Frontend Setup
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+```
+
+Frontend will be available at: **http://localhost:5173**
+
+---
+
+## 📚 API Documentation
+
+### Authentication
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/auth/register` | POST | Register new user |
+| `/api/v1/auth/login` | POST | Login (returns JWT) |
+
+### Financial Data
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/financials/` | POST | Create financial record |
+| `/api/v1/financials/runway` | GET | Get current runway |
+| `/api/v1/financials/import` | POST | Import CSV data |
+| `/api/v1/financials/forecast` | GET | ML revenue forecast |
+| `/api/v1/financials/export` | GET | Export all records |
+
+### Forecasting
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/forecast/generate` | POST | Generate multi-period forecast |
+| `/api/v1/forecast/project-to-date` | POST | Project to specific date |
+| `/api/v1/forecast/methods` | GET | Available forecast methods |
+
+### Scenarios
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/scenarios/simulate` | POST | Run single scenario |
+| `/api/v1/scenarios/compare` | POST | Compare multiple scenarios |
+| `/api/v1/scenarios/templates` | GET | Get scenario templates |
+| `/api/v1/scenarios/baseline` | GET | Current financial baseline |
+
+### AI & Roadmaps
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/ai/suggest-strategy` | POST | Get AI pivot suggestions |
+| `/api/v1/roadmaps/` | GET/POST | Manage execution roadmaps |
+
+---
+
+## ✅ Test Results
+
+**Total: 72 Tests | 100% Pass Rate**
+
+| Test Suite | Tests | Status |
+|------------|-------|--------|
+| **Backend Unit Tests** | 35 | ✅ All Passed |
+| **Frontend Component Tests** | 16 | ✅ All Passed |
+| **Integration Tests** | 21 | ✅ All Passed |
+
+### Backend Test Coverage
+
+- ✅ Runway Engine (burn rate, runway calculation)
+- ✅ Forecast Engine (linear, ensemble methods)
+- ✅ Scenario Engine (hire, invest, cut scenarios)
+- ✅ Security (JWT, password hashing)
+- ✅ Schema Validation (Pydantic models)
+- ✅ PRD Requirements (FR-1 through FR-9)
+
+### Run Tests
+
+```bash
+# Backend tests
+cd backend
+python -m pytest tests/ -v
+
+# Frontend tests
+cd frontend
+npm test
+```
+
+---
+
+## ⚙️ Configuration
+
+### Environment Variables (`.env`)
+
+```env
+# Project
+PROJECT_NAME=STRATA-AI
+API_V1_STR=/api/v1
+ENVIRONMENT=development
+DEBUG=True
+
+# Authentication
+SECRET_KEY=your-super-secret-key-minimum-32-chars
+ACCESS_TOKEN_EXPIRE_MINUTES=1440
+
+# Database
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/?retryWrites=true
+
+# LLM Configuration
+GROQ_API_KEY=gsk_your_groq_api_key
+LLM_MODEL=llama-3.3-70b-versatile
+```
+
+---
+
+## 🌐 Deployment
+
+### Backend (Render.com - Free Tier)
+
+1. Connect GitHub repo
+2. Set environment variables
+3. Build command: `pip install -r requirements.txt`
+4. Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+
+### Frontend (Vercel - Free Tier)
+
+1. Connect GitHub repo
+2. Framework: Vite
+3. Build command: `npm run build`
+4. Output directory: `dist`
+
+### Database (MongoDB Atlas - Free Tier)
+
+1. Create free M0 cluster
+2. Add database user
+3. Whitelist IP addresses (or 0.0.0.0/0 for development)
+4. Get connection string for `.env`
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **Groq** for free LLM API access
+- **MongoDB Atlas** for free database hosting
+- **Vercel** and **Render** for free deployment tiers
+
+---
+
+<p align="center">
+  Built with ❤️ for startup founders who refuse to fail
+</p>
