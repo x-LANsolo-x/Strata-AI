@@ -61,13 +61,11 @@ origins = [
 if settings.FRONTEND_URL:
     origins.append(settings.FRONTEND_URL)
 
-# Allow all origins in development
-if settings.ENVIRONMENT == "development":
-    origins = ["*"]
-
+# Allow all Vercel preview URLs
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",  # Allow all Vercel deployments
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
