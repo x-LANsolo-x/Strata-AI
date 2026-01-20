@@ -27,6 +27,12 @@ const LoginPage = lazy(() =>
 const RegisterPage = lazy(() => 
   import('@/pages/auth/RegisterPage').then(m => ({ default: m.RegisterPage }))
 );
+const ForgotPasswordPage = lazy(() => 
+  import('@/pages/auth/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage }))
+);
+const ResetPasswordPage = lazy(() => 
+  import('@/pages/auth/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage }))
+);
 const SmartOnboarding = lazy(() => 
   import('@/pages/onboarding/SmartOnboarding').then(m => ({ default: m.SmartOnboarding }))
 );
@@ -63,6 +69,8 @@ const router = createBrowserRouter([
     children: [
       { path: '/login', element: withSuspense(LoginPage) },
       { path: '/register', element: withSuspense(RegisterPage) },
+      { path: '/forgot-password', element: withSuspense(ForgotPasswordPage) },
+      { path: '/reset-password', element: withSuspense(ResetPasswordPage) },
     ],
   },
   {

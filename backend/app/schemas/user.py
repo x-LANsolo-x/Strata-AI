@@ -1,5 +1,6 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
+
 
 # Properties to receive via API on creation
 class UserCreate(BaseModel):
@@ -7,12 +8,52 @@ class UserCreate(BaseModel):
     password: str
     full_name: Optional[str] = None
 
+
 # Properties to return via API (no password!)
 class UserResponse(BaseModel):
-    id: str # Beanie IDs are Pydantic ObjectIds, we'll serialize to string
+    id: str  # Beanie IDs are Pydantic ObjectIds, we'll serialize to string
     email: EmailStr
     full_name: Optional[str] = None
     is_active: bool
 
     class Config:
         from_attributes = True
+
+
+# Password Reset Schemas
+class PasswordResetRequest(BaseModel):
+    """Request body for initiating password reset."""
+    email: EmailStr
+
+
+class PasswordResetConfirm(BaseModel):
+    """Request body for confirming password reset with new password."""
+    token: str
+    new_password: str
+    
+    @field_validator('new_password')
+    @classmethod
+    def password_strength(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters')
+        return v
+
+
+class PasswordResetResponse(BaseModel):
+    """Response after password reset request."""
+    message: str
+    # In production, you'd send an email. For demo, we return the token.
+    reset_token: Optional[str] = None  # Only returned in development mode
+
+
+class PasswordChangeRequest(BaseModel):
+    """Request body for changing password when logged in."""
+    current_password: str
+    new_password: str
+    
+    @field_validator('new_password')
+    @classmethod
+    def password_strength(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters')
+        return v

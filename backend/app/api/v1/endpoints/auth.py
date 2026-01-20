@@ -1,17 +1,29 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core import security
 from app.core.config import settings
 from app.models.user import User
-from app.schemas.user import UserCreate, UserResponse
+from app.schemas.user import (
+    UserCreate, 
+    UserResponse,
+    PasswordResetRequest,
+    PasswordResetConfirm,
+    PasswordResetResponse,
+    PasswordChangeRequest,
+)
 from app.schemas.token import Token
+from app.api.v1.deps import get_current_user
 
 router = APIRouter()
 
+
 @router.post("/register", response_model=UserResponse)
 async def register_user(user_in: UserCreate):
+    """
+    Register a new user account.
+    """
     # 1. Check if user exists
     if await User.find_one(User.email == user_in.email):
         raise HTTPException(
@@ -35,8 +47,12 @@ async def register_user(user_in: UserCreate):
         is_active=user.is_active
     )
 
+
 @router.post("/login", response_model=Token)
 async def login_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    """
+    OAuth2 compatible token login, get an access token for future requests.
+    """
     # 1. Authenticate
     user = await User.find_one(User.email == form_data.username)
     if not user or not security.verify_password(form_data.password, user.hashed_password):
@@ -45,7 +61,11 @@ async def login_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
 
-    # 2. Create Token
+    # 2. Update last login
+    user.last_login = datetime.utcnow()
+    await user.save()
+
+    # 3. Create Token
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return {
         "access_token": security.create_access_token(
@@ -53,3 +73,105 @@ async def login_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
         ),
         "token_type": "bearer",
     }
+
+
+@router.post("/forgot-password", response_model=PasswordResetResponse)
+async def forgot_password(request: PasswordResetRequest):
+    """
+    Request a password reset link.
+    
+    In production, this sends an email with a reset link.
+    In development mode, it returns the token directly for testing.
+    """
+    # Find user by email
+    user = await User.find_one(User.email == request.email)
+    
+    # Always return success to prevent email enumeration attacks
+    # But only generate token if user exists
+    if user:
+        reset_token = security.create_password_reset_token(request.email)
+        
+        # In production, send email here:
+        # await send_password_reset_email(request.email, reset_token)
+        
+        # For development/demo, return token directly
+        if settings.DEBUG:
+            return PasswordResetResponse(
+                message="Password reset instructions have been sent to your email.",
+                reset_token=reset_token  # Only in dev mode!
+            )
+    
+    # Same response whether user exists or not (security)
+    return PasswordResetResponse(
+        message="If an account with that email exists, password reset instructions have been sent."
+    )
+
+
+@router.post("/reset-password", response_model=dict)
+async def reset_password(request: PasswordResetConfirm):
+    """
+    Reset password using a valid reset token.
+    """
+    # Verify token
+    email = security.verify_password_reset_token(request.token)
+    if not email:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid or expired password reset token"
+        )
+    
+    # Find user
+    user = await User.find_one(User.email == email)
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+    
+    if not user.is_active:
+        raise HTTPException(
+            status_code=400,
+            detail="Inactive user"
+        )
+    
+    # Update password
+    user.hashed_password = security.get_password_hash(request.new_password)
+    await user.save()
+    
+    return {"message": "Password has been reset successfully. You can now login with your new password."}
+
+
+@router.post("/change-password", response_model=dict)
+async def change_password(
+    request: PasswordChangeRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Change password for the currently logged-in user.
+    Requires authentication and current password verification.
+    """
+    # Verify current password
+    if not security.verify_password(request.current_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=400,
+            detail="Incorrect current password"
+        )
+    
+    # Update to new password
+    current_user.hashed_password = security.get_password_hash(request.new_password)
+    await current_user.save()
+    
+    return {"message": "Password changed successfully"}
+
+
+@router.get("/me", response_model=UserResponse)
+async def get_current_user_info(current_user: User = Depends(get_current_user)):
+    """
+    Get current logged-in user information.
+    """
+    return UserResponse(
+        id=str(current_user.id),
+        email=current_user.email,
+        full_name=current_user.full_name,
+        is_active=current_user.is_active
+    )
