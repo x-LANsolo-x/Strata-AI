@@ -166,21 +166,27 @@ export function Sidebar() {
           </div>
           <div className="space-y-2">
             <a 
-              href="/docs" 
+              href="https://github.com/x-LANsolo-x/Strata-AI#readme" 
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 transition-colors"
             >
               <BookOpen className="h-4 w-4" />
               Documentation
             </a>
             <a 
-              href="/support" 
+              href="https://github.com/x-LANsolo-x/Strata-AI/issues" 
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 transition-colors"
             >
               <MessageCircle className="h-4 w-4" />
               Contact Support
             </a>
             <a 
-              href="/feedback" 
+              href="https://github.com/x-LANsolo-x/Strata-AI/issues/new" 
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600 transition-colors"
             >
               <Send className="h-4 w-4" />
