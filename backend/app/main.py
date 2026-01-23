@@ -116,10 +116,11 @@ async def root():
     return {"message": "STRATA-AI API", "status": "running", "version": "1.0.0"}
 
 
-@app.get("/health", response_class=ORJSONResponse)
+@app.api_route("/health", methods=["GET", "HEAD"], response_class=ORJSONResponse)
 async def health_check():
     """
     Health check endpoint for load balancers and monitoring.
+    Supports both GET and HEAD methods for uptime monitors.
     Returns quickly to minimize resource usage.
     """
     return {

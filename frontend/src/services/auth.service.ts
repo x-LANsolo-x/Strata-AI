@@ -41,7 +41,7 @@ export const login = async (email: string, password?: string): Promise<{ user: U
   // Fetch user info from /startup/me endpoint using the token
   let user: User;
   try {
-    const meResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1'}/startup/me`, {
+    const meResponse = await fetch(`${import.meta.env.VITE_API_URL || 'https://strata-ai-backend-zj91.onrender.com/api/v1'}/startup/me`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${tempToken}`,
