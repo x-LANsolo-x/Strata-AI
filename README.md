@@ -603,12 +603,6 @@ For detailed instructions, see [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md)
 
 ---
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
 ## 🙏 Acknowledgments
 
 - **Groq** for free LLM API access
